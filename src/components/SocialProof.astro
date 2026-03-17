@@ -1,19 +1,30 @@
 ---
-import { site } from "../config/site";
-const rating = site.googleRating ?? 4.9;
-const count = site.googleReviewCount ?? 142;
+import { heritage } from "../data/site-content.js";
+const reviews = heritage.clientReviews.slice(0, 3);
 ---
 
-<section class="scroll-reveal border-t border-[#121212]/10 px-4 py-24 sm:px-6 sm:py-32" aria-labelledby="social-heading">
-  <div class="mx-auto max-w-6xl">
-    <h2 id="social-heading" class="sr-only">Avis clients</h2>
-    <div class="flex flex-col items-start gap-6 sm:flex-row sm:items-baseline sm:gap-12">
-      <p class="font-editorial text-7xl font-normal text-[#121212] sm:text-8xl" aria-hidden="true">
-        {rating}/5
-      </p>
-      <p class="text-lg text-[#121212]/70">
-        Basé sur {count} avis locaux sur Google.
-      </p>
-    </div>
+<section id="avis" class="border-t border-stone-200 py-24" aria-labelledby="avis-heading" style="background-color: rgba(120, 53, 15, 0.08);">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6">
+    <h2 id="avis-heading" class="font-serif text-4xl font-semibold tracking-tight text-[var(--fg)] md:text-5xl text-center">
+      Ce que disent nos clients
+    </h2>
+    <p class="mt-6 text-center text-[var(--fg)]/80">
+      {heritage.googleRating}/5 étoiles sur Google Maps
+      {heritage.googleReviewCount > 0 && (
+        <span> — {heritage.googleReviewCount} avis</span>
+      )}
+    </p>
+
+    <ul class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 list-none p-0 m-0" role="list">
+      {reviews.map((r) => (
+        <li class="border border-stone-200 bg-[var(--bg)] p-6">
+          <p class="text-[var(--fg)]/90 leading-relaxed">"{r.text}"</p>
+          <p class="mt-4 text-sm font-medium text-[var(--accent)]">{r.author}</p>
+          <p class="text-sm text-[var(--fg)]/60" aria-label={`${r.rating} sur 5 étoiles`}>
+            {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
+          </p>
+        </li>
+      ))}
+    </ul>
   </div>
 </section>

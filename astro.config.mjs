@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://www.sos-elec.com',
+  site: 'https://www.escalierswipfolivier.fr',
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()]

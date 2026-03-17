@@ -1,0 +1,109 @@
+---
+import { categories } from "../data/site-content.js";
+---
+
+<section id="catalogue" class="border-t border-stone-200" aria-labelledby="catalogue-heading">
+  <h2 id="catalogue-heading" class="sr-only">Nos réalisations</h2>
+
+  {
+    categories.map((category, index) => {
+      const isOdd = index % 2 === 0;
+      const firstImage = category.imageUrls.find(Boolean) || "";
+      return (
+        <article
+          class:list={[
+            "min-h-[100vh] grid grid-cols-1 md:grid-cols-10 gap-0 border-b border-stone-200",
+          ]}
+          aria-labelledby={`cat-${category.id}`}
+        >
+          {/* Section impaire : image à gauche 60%, texte à droite 40% */}
+          {isOdd ? (
+            <>
+              <div class="relative md:col-span-6 order-2 md:order-1 min-h-[50vh] md:min-h-0">
+                <div class="catalog-image-wrap h-full w-full bg-stone-100">
+                  {firstImage ? (
+                    <img
+                      src={firstImage}
+                      alt=""
+                      loading="lazy"
+                      class="h-full w-full object-cover"
+                      width="800"
+                      height="600"
+                    />
+                  ) : (
+                    <div
+                      class="flex h-full min-h-[280px] items-center justify-center text-stone-400 text-sm"
+                      role="img"
+                      aria-label="Image à venir"
+                    >
+                      {/* TODO: coller URL image réalisation dans site-content.js → categories[{index}].imageUrls */}
+                      Image à venir
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div class="flex flex-col justify-center px-6 py-16 md:col-span-4 md:py-24 order-1 md:order-2">
+                <h3 id={`cat-${category.id}`} class="font-serif text-4xl font-semibold tracking-tight text-[var(--fg)] md:text-5xl">
+                  {category.title}
+                </h3>
+                <p class="mt-6 leading-relaxed text-[var(--fg)]/80">
+                  {category.descriptionSEO}
+                </p>
+                <ul class="mt-8 list-none space-y-3" aria-label="Avantages">
+                  {category.benefits.map((b) => (
+                    <li class="flex items-start gap-3 text-[var(--fg)]/80">
+                      <span class="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          ) : (
+            <>
+              <div class="flex flex-col justify-center px-6 py-16 md:col-span-4 md:py-24">
+                <h3 id={`cat-${category.id}`} class="font-serif text-4xl font-semibold tracking-tight text-[var(--fg)] md:text-5xl">
+                  {category.title}
+                </h3>
+                <p class="mt-6 leading-relaxed text-[var(--fg)]/80">
+                  {category.descriptionSEO}
+                </p>
+                <ul class="mt-8 list-none space-y-3" aria-label="Avantages">
+                  {category.benefits.map((b) => (
+                    <li class="flex items-start gap-3 text-[var(--fg)]/80">
+                      <span class="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div class="relative md:col-span-6 min-h-[50vh] md:min-h-0">
+                <div class="catalog-image-wrap h-full w-full bg-stone-100">
+                  {firstImage ? (
+                    <img
+                      src={firstImage}
+                      alt=""
+                      loading="lazy"
+                      class="h-full w-full object-cover"
+                      width="800"
+                      height="600"
+                    />
+                  ) : (
+                    <div
+                      class="flex h-full min-h-[280px] items-center justify-center text-stone-400 text-sm"
+                      role="img"
+                      aria-label="Image à venir"
+                    >
+                      {/* TODO: coller URL image dans site-content.js → categories[{index}].imageUrls */}
+                      Image à venir
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </article>
+      );
+    })
+  }
+</section>

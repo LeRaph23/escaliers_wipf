@@ -1,0 +1,43 @@
+---
+import { galleryHeritageUrls } from "../data/site-content.js";
+---
+
+<section id="galerie" class="border-t border-stone-200 bg-[var(--bg)] py-24" aria-labelledby="galerie-heading">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6">
+    <h2 id="galerie-heading" class="font-serif text-4xl font-semibold tracking-tight text-[var(--fg)] md:text-5xl text-center">
+      Réalisations
+    </h2>
+    <p class="mt-4 text-center text-[var(--fg)]/80 max-w-2xl mx-auto">
+      La beauté du bois et du métal, sans fioritures.
+    </p>
+
+    {galleryHeritageUrls.length > 0 ? (
+      <ul class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0 m-0">
+        {galleryHeritageUrls.map((url, i) => (
+          <li class="overflow-hidden border border-stone-200">
+            <img
+              src={url}
+              alt=""
+              loading="lazy"
+              class="h-72 w-full object-cover"
+              width="400"
+              height="288"
+            />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* TODO: ajouter les URLs des photos dans site-content.js → galleryHeritageUrls ou imageUrls des categories */}
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <div
+            class="flex h-72 items-center justify-center border border-stone-200 bg-stone-50 text-stone-400 text-sm"
+            aria-hidden="true"
+          >
+            Photo {n} à venir
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>

@@ -1,22 +1,51 @@
 ---
-import { site } from "../config/site";
+import { site, heritage } from "../data/site-content.js";
 ---
 
-<header class="sticky top-0 z-50 w-full border-b border-[#121212]/10 bg-[#F8F9FA]" role="banner">
-  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-    <a href="/" class="transition opacity-90 hover:opacity-100" aria-label="Accueil - SOS Elec">
-      <img src="/logo.png" alt="SOS Elec - Dépannage, entretien, installation" class="h-12 w-auto sm:h-14" width="220" height="56" />
+<header
+  id="site-header"
+  class="fixed top-0 left-0 right-0 z-50 border-b border-stone-200/0 bg-[#FAF9F6]/80 transition-[background-color,border-color] duration-300"
+  role="banner"
+>
+  <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+    <a href="/" class="font-serif text-xl font-semibold tracking-tight text-[var(--fg)] hover:text-[var(--accent)]" aria-label={`${site.name} – Accueil`}>
+      {site.name}
     </a>
-    <nav class="flex items-center gap-6" aria-label="Navigation principale">
-      <a href="/#contact" class="text-sm font-medium text-[#121212]/70 hover:text-[#121212]">Contact & devis</a>
+    <nav class="flex items-center gap-6 sm:gap-8" aria-label="Navigation principale">
+      <a href="/#catalogue" class="text-sm text-[var(--fg)]/80 hover:text-[var(--fg)]">Réalisations</a>
+      <a href="/#galerie" class="text-sm text-[var(--fg)]/80 hover:text-[var(--fg)]">Galerie</a>
+      <a href="/#avis" class="text-sm text-[var(--fg)]/80 hover:text-[var(--fg)]">Avis</a>
+      <a href="/#contact" class="text-sm text-[var(--fg)]/80 hover:text-[var(--fg)]">Contact</a>
+
+      <!-- Sélecteur de langue FR / DE -->
+      <div class="flex items-center gap-1 border-l border-stone-200 pl-4">
+        <a href="#" class="px-2 py-1 text-sm font-medium text-[var(--accent)]" aria-current="page" aria-label="Français">FR</a>
+        <span class="text-stone-300">|</span>
+        <a href="#" class="px-2 py-1 text-sm text-[var(--fg)]/60 hover:text-[var(--fg)]" aria-label="Deutsch">DE</a>
+      </div>
+
       <a
-        href={`tel:${site.phone}`}
-        class="bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white border border-[var(--accent)] transition hover:bg-[#121212] hover:border-[#121212] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2"
-        aria-label="Appeler pour dépannage urgence"
+        href="/#contact"
+        class="bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-white border border-[var(--accent)] transition hover:bg-[#1C1917] hover:border-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2"
       >
-        <span class="hidden sm:inline">Dépannage 7j/7</span>
-        <span class="sm:hidden">7j/7</span> — {site.phoneDisplay}
+        Devis
       </a>
     </nav>
   </div>
 </header>
+
+<script is:inline>
+  (function () {
+    var header = document.getElementById("site-header");
+    if (!header) return;
+    function update() {
+      if (window.scrollY > 20) {
+        header.classList.add("!border-stone-200", "bg-[#FAF9F6]/95", "backdrop-blur-md");
+      } else {
+        header.classList.remove("!border-stone-200", "bg-[#FAF9F6]/95", "backdrop-blur-md");
+      }
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  })();
+</script>

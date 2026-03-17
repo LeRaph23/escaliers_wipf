@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { site } from "../config/site";
+import { site, heritage } from "../data/site-content.js";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 
@@ -10,58 +10,31 @@ interface Props {
   faqItems?: { question: string; answer: string }[];
 }
 
-const { title = `${site.keyword} | ${site.name} 7j/7`, description = site.description, faqItems = [] } = Astro.props;
+const { title = site.defaultMeta.title, description = site.defaultMeta.description, faqItems = [] } = Astro.props;
 
 const canonical = site.url.replace(/\/$/, "") + (Astro.url.pathname === "/" ? "/" : Astro.url.pathname);
 
 const localBusinessSchema = {
   "@context": "https://schema.org",
-  "@type": ["Electrician", "LocalBusiness"],
-  name: site.nameFull,
-  description: site.description,
+  "@type": ["LocalBusiness", "ProfessionalService"],
+  name: heritage.companyName,
+  description: description,
   url: site.url,
-  telephone: site.phone,
+  telephone: heritage.contact.phone,
   address: {
     "@type": "PostalAddress",
-    streetAddress: site.address.streetAddress,
-    addressLocality: site.address.addressLocality,
-    addressRegion: site.address.addressRegion,
-    postalCode: site.address.postalCode,
-    addressCountry: site.address.addressCountry,
+    streetAddress: heritage.contact.addressStreet,
+    addressLocality: heritage.contact.addressLocality,
+    postalCode: heritage.contact.addressPostalCode,
+    addressCountry: heritage.contact.addressCountry,
   },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: site.geo.latitude,
-    longitude: site.geo.longitude,
-  },
-  sameAs: site.sameAs,
-  openingHoursSpecification: site.openingHours.map((h) => {
-    const [day, ...times] = h.split(" ");
-    const [start, end] = times[0].split("-");
-    const dayMap: Record<string, string> = {
-      Mo: "Monday",
-      Tu: "Tuesday",
-      We: "Wednesday",
-      Th: "Thursday",
-      Fr: "Friday",
-      Sa: "Saturday",
-      Su: "Sunday",
-    };
-    return {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: dayMap[day] || day,
-      opens: start,
-      closes: end,
-    };
-  }),
-  priceRange: site.priceRange,
-  areaServed: site.areaServed.map((a) => ({ "@type": "Place", name: a })),
-  ...(site.googleRating != null && site.googleReviewCount != null
+  areaServed: ["Sundgau", "Haut-Rhin", "Mulhouse", "Belfort", "Liebsdorf"],
+  ...(heritage.googleRating != null && heritage.googleReviewCount != null
     ? {
         aggregateRating: {
           "@type": "AggregateRating",
-          ratingValue: site.googleRating,
-          reviewCount: site.googleReviewCount,
+          ratingValue: heritage.googleRating,
+          reviewCount: heritage.googleReviewCount,
           bestRating: 5,
         },
       }
@@ -97,8 +70,8 @@ const faqSchema =
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#121212" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="theme-color" content="#FAF9F6" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonical} />
 
     <title>{title}</title>
@@ -111,17 +84,21 @@ const faqSchema =
     <meta property="og:description" content={description} />
     <meta property="og:locale" content={site.locale} />
     <meta property="og:site_name" content={site.name} />
-    <meta property="og:image" content={new URL(site.imageOg, site.url).href} />
+    <meta property="og:image" content={new URL("/og-image.jpg", site.url).href} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={new URL(site.imageOg, site.url).href} />
+    <meta name="twitter:image" content={new URL("/og-image.jpg", site.url).href} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" as="style" />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap"
+      as="style"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
 
@@ -129,7 +106,7 @@ const faqSchema =
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
     {faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
   </head>
-  <body class="min-h-screen text-[var(--fg)] antialiased font-sans noise-overlay">
+  <body class="min-h-screen text-[var(--fg)] antialiased font-sans leading-relaxed noise-overlay">
     <Header />
     <main>
       <slot />

@@ -1,0 +1,70 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { heritage } from "../data/site-content.js";
+const legal = heritage.legal;
+---
+
+<BaseLayout
+  title="Mentions légales | Escaliers Wipf Olivier"
+  description="Mentions légales et politique de confidentialité - Escaliers Wipf Olivier."
+>
+  <article class="mx-auto max-w-3xl px-4 py-24 sm:px-6">
+    <h1 class="font-serif text-4xl font-semibold tracking-tight text-[var(--fg)]">Mentions légales</h1>
+
+    <section class="mt-12 border-t border-stone-200 pt-8">
+      <h2 class="font-serif text-xl font-semibold text-[var(--fg)]">Confidentialité</h2>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        {heritage.companyName} n'enregistre pas d'informations personnelles permettant l'identification, à l'exception des formulaires que l'utilisateur est libre de remplir. Ces informations ne seront pas utilisées sans votre accord ; nous les utiliserons seulement pour vous adresser des courriers, des brochures, des devis ou vous contacter.
+      </p>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        Les informations recueillies bénéficient de la protection de la loi « Informatique et Libertés » n° 78-17 du 6 janvier 1978. Elles bénéficient d'un droit d'accès, de rectification, d'opposition à communication et de suppression sur simple demande à {legal.raisonSociale}, {legal.siege}.
+      </p>
+    </section>
+
+    <section class="mt-12 border-t border-stone-200 pt-8">
+      <h2 class="font-serif text-xl font-semibold text-[var(--fg)]">Règlement général sur la protection des données (RGPD)</h2>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        {legal.rgpdIntro} Pour connaître et exercer vos droits, notamment de retrait de votre consentement ou vous inscrire sur la liste d'opposition au démarchage téléphonique, consultez cette page.
+      </p>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        Pour toute information ou exercice de vos droits Informatique et Libertés, vous pouvez contacter {heritage.companyName} ou vous tourner vers la <a href={legal.cnil} class="text-[var(--accent)] hover:underline">CNIL</a>.
+      </p>
+    </section>
+
+    <section class="mt-12 border-t border-stone-200 pt-8">
+      <h2 class="font-serif text-xl font-semibold text-[var(--fg)]">Utilisation des cookies</h2>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        {legal.cookies}
+      </p>
+    </section>
+
+    <section class="mt-12 border-t border-stone-200 pt-8">
+      <h2 class="font-serif text-xl font-semibold text-[var(--fg)]">Opposition au démarchage</h2>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        Conformément à l'article L.223-2 du code de la consommation, vous pouvez vous inscrire gratuitement sur la liste d'opposition au démarchage téléphonique : <a href={legal.blocTel} class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">bloctel.gouv.fr</a>.
+      </p>
+    </section>
+
+    <section class="mt-12 border-t border-stone-200 pt-8">
+      <h2 class="font-serif text-xl font-semibold text-[var(--fg)]">Éditeur</h2>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        {legal.raisonSociale}<br />
+        {legal.rcs}<br />
+        Siège social : {legal.siege}.<br />
+        Téléphone : {legal.telephone}
+        {legal.fax ? ` — Fax : ${legal.fax}` : ""}
+      </p>
+    </section>
+
+    <section class="mt-12 border-t border-stone-200 pt-8">
+      <h2 class="font-serif text-xl font-semibold text-[var(--fg)]">Directeur de la publication</h2>
+      <p class="mt-4 leading-relaxed text-[var(--fg)]/80">
+        {legal.directeurPublication}
+      </p>
+    </section>
+
+    <p class="mt-16 border-t border-stone-200 pt-8">
+      <a href="/" class="text-[var(--accent)] hover:underline">Retour à l'accueil</a>
+    </p>
+  </article>
+</BaseLayout>

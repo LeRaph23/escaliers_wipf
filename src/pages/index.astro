@@ -1,24 +1,19 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { faqItems } from "../config/faq";
 import Hero from "../components/Hero.astro";
-import BentoInterventions from "../components/BentoInterventions.tsx";
+import CatalogLinear from "../components/CatalogLinear.astro";
+import GalleryHeritage from "../components/GalleryHeritage.astro";
 import SocialProof from "../components/SocialProof.astro";
-import ZoneIntervention from "../components/ZoneIntervention.astro";
+import VideoEmbed from "../components/VideoEmbed.astro";
 import ContactSection from "../components/ContactSection.astro";
-import FAQ from "../components/FAQ.astro";
-
-const metaTitle = "Électricien urgence dépannage Helfrantzkirch | SOS Elec 7j/7";
-const metaDescription =
-  "Électricien urgence et dépannage à Helfrantzkirch et dans le Haut-Rhin. Intervention 7j/7, mise aux normes, rénovation. Devis gratuit · 06 72 04 51 06.";
-const faqForSchema = faqItems.map((item) => ({ question: item.question, answer: item.answer }));
+import { site } from "../data/site-content.js";
 ---
 
-<BaseLayout title={metaTitle} description={metaDescription} faqItems={faqForSchema}>
+<BaseLayout title={site.defaultMeta.title} description={site.defaultMeta.description}>
   <Hero />
-  <BentoInterventions client:visible />
+  <CatalogLinear />
+  <GalleryHeritage />
   <SocialProof />
-  <ZoneIntervention />
+  <VideoEmbed />
   <ContactSection />
-  <FAQ />
 </BaseLayout>
