@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none" aria-hidden="true">
+  <!-- Icône ampoule (vert) -->
+  <path d="M12 4a6 6 0 0 0-6 6c0 2.2 1.1 4.1 2.8 5.3V18h6.4V15.3C16.1 14.1 17 12.2 17 10a6 6 0 0 0-5-5.9V4h-2v.1zM9 18v1.5h4V18H9zm0 3v1.5h4V21H9z" fill="#16a34a"/>
+  <rect x="8.5" y="24" width="3" height="1.5" rx="0.4" fill="#78716c"/>
+  <!-- SOS -->
+  <text x="36" y="32" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" font-weight="700" letter-spacing="-0.02em" fill="#1c1917">SOS</text>
+  <!-- elec -->
+  <text x="92" y="32" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="500" fill="#1c1917">elec</text>
+</svg>

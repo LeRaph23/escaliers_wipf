@@ -1,0 +1,19 @@
+---
+import { site } from "../config/site";
+const rating = site.googleRating ?? 4.9;
+const count = site.googleReviewCount ?? 142;
+---
+
+<section class="scroll-reveal border-t border-[#121212]/10 px-4 py-24 sm:px-6 sm:py-32" aria-labelledby="social-heading">
+  <div class="mx-auto max-w-6xl">
+    <h2 id="social-heading" class="sr-only">Avis clients</h2>
+    <div class="flex flex-col items-start gap-6 sm:flex-row sm:items-baseline sm:gap-12">
+      <p class="font-editorial text-7xl font-normal text-[#121212] sm:text-8xl" aria-hidden="true">
+        {rating}/5
+      </p>
+      <p class="text-lg text-[#121212]/70">
+        Basé sur {count} avis locaux sur Google.
+      </p>
+    </div>
+  </div>
+</section>

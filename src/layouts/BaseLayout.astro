@@ -1,0 +1,161 @@
+---
+import "../styles/global.css";
+import { site } from "../config/site";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  faqItems?: { question: string; answer: string }[];
+}
+
+const { title = `${site.keyword} | ${site.name} 7j/7`, description = site.description, faqItems = [] } = Astro.props;
+
+const canonical = site.url.replace(/\/$/, "") + (Astro.url.pathname === "/" ? "/" : Astro.url.pathname);
+
+const localBusinessSchema = {
+  "@context": "https://schema.org",
+  "@type": ["Electrician", "LocalBusiness"],
+  name: site.nameFull,
+  description: site.description,
+  url: site.url,
+  telephone: site.phone,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: site.address.streetAddress,
+    addressLocality: site.address.addressLocality,
+    addressRegion: site.address.addressRegion,
+    postalCode: site.address.postalCode,
+    addressCountry: site.address.addressCountry,
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: site.geo.latitude,
+    longitude: site.geo.longitude,
+  },
+  sameAs: site.sameAs,
+  openingHoursSpecification: site.openingHours.map((h) => {
+    const [day, ...times] = h.split(" ");
+    const [start, end] = times[0].split("-");
+    const dayMap: Record<string, string> = {
+      Mo: "Monday",
+      Tu: "Tuesday",
+      We: "Wednesday",
+      Th: "Thursday",
+      Fr: "Friday",
+      Sa: "Saturday",
+      Su: "Sunday",
+    };
+    return {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: dayMap[day] || day,
+      opens: start,
+      closes: end,
+    };
+  }),
+  priceRange: site.priceRange,
+  areaServed: site.areaServed.map((a) => ({ "@type": "Place", name: a })),
+  ...(site.googleRating != null && site.googleReviewCount != null
+    ? {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: site.googleRating,
+          reviewCount: site.googleReviewCount,
+          bestRating: 5,
+        },
+      }
+    : {}),
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Accueil", item: site.url },
+  ],
+};
+
+const faqSchema =
+  faqItems.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      }
+    : null;
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#121212" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="canonical" href={canonical} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content={site.locale} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:image" content={new URL(site.imageOg, site.url).href} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(site.imageOg, site.url).href} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" as="style" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json" set:html={JSON.stringify(localBusinessSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+    {faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
+  </head>
+  <body class="min-h-screen text-[var(--fg)] antialiased font-sans noise-overlay">
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <script is:inline>
+      (function () {
+        function run() {
+          var els = document.querySelectorAll(".scroll-reveal");
+          if (!els.length) return;
+          var io = new IntersectionObserver(
+            function (entries) {
+              for (var i = 0; i < entries.length; i++) {
+                if (entries[i].isIntersecting) {
+                  entries[i].target.classList.add("is-visible");
+                  io.unobserve(entries[i].target);
+                }
+              }
+            },
+            { rootMargin: "-20px 0px", threshold: 0.05 }
+          );
+          for (var j = 0; j < els.length; j++) io.observe(els[j]);
+        }
+        if (document.readyState === "complete") run();
+        else window.addEventListener("load", run);
+      })();
+    </script>
+  </body>
+</html>

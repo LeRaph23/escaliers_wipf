@@ -1,0 +1,22 @@
+---
+import { site } from "../config/site";
+---
+
+<header class="sticky top-0 z-50 w-full border-b border-[#121212]/10 bg-[#F8F9FA]" role="banner">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+    <a href="/" class="transition opacity-90 hover:opacity-100" aria-label="Accueil - SOS Elec">
+      <img src="/logo.png" alt="SOS Elec - Dépannage, entretien, installation" class="h-12 w-auto sm:h-14" width="220" height="56" />
+    </a>
+    <nav class="flex items-center gap-6" aria-label="Navigation principale">
+      <a href="/#contact" class="text-sm font-medium text-[#121212]/70 hover:text-[#121212]">Contact & devis</a>
+      <a
+        href={`tel:${site.phone}`}
+        class="bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white border border-[var(--accent)] transition hover:bg-[#121212] hover:border-[#121212] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2"
+        aria-label="Appeler pour dépannage urgence"
+      >
+        <span class="hidden sm:inline">Dépannage 7j/7</span>
+        <span class="sm:hidden">7j/7</span> — {site.phoneDisplay}
+      </a>
+    </nav>
+  </div>
+</header>

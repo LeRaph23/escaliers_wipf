@@ -1,0 +1,111 @@
+---
+import { site } from "../config/site";
+
+const interventions = [
+  {
+    title: "Dépannage électrique",
+    image: "intervention-depannage.jpg",
+    description:
+      "Panne, coupure, disjoncteur qui saute : nous intervenons en urgence à Helfrantzkirch et dans le Haut-Rhin, 7j/7. Diagnostic et réparation dans les meilleurs délais.",
+  },
+  {
+    title: "Mise aux normes",
+    image: "intervention-mise-aux-normes.jpg",
+    description:
+      "Tableaux, prises, luminaires, cuisine, salle de bain : nous mettons votre installation aux normes en vigueur pour la sécurité de votre foyer ou local à Helfrantzkirch et environs.",
+  },
+  {
+    title: "Rénovation partielle ou complète",
+    image: "intervention-renovation.jpg",
+    description:
+      "Travaux neufs, rénovation partielle ou complète, ajout de prises ou d'éclairage. Devis gratuit et intervention sur Helfrantzkirch et le Haut-Rhin.",
+  },
+  {
+    title: "Éclairage",
+    image: "intervention-eclairage.jpg",
+    description:
+      "Luminaires intérieur et extérieur, spots, ampoules spéciales. Conception et pose pour tous vos projets d'éclairage.",
+  },
+  {
+    title: "Chauffage électrique",
+    image: "intervention-chauffage.jpg",
+    description:
+      "Chauffage à inertie, pierre chauffante, chauffage au sol, thermostat connecté. Installation et mise en service.",
+  },
+  {
+    title: "Climatisation",
+    image: "intervention-climatisation.jpg",
+    description:
+      "Pose du moteur et des cassettes de climatisation. De la pièce unique au système multi-splits.",
+  },
+  {
+    title: "Parlophonie et vidéophonie",
+    image: "intervention-parlophonie.jpg",
+    description:
+      "Systèmes de parlophonie ou vidéophonie, individuels ou collectifs. Installation et dépannage.",
+  },
+  {
+    title: "Sécurité",
+    image: "intervention-securite.jpg",
+    description:
+      "Alarme, caméras connectées, gestion d'accès, motorisation de portail ou portes. Solutions sur mesure.",
+  },
+  {
+    title: "Maison connectée",
+    image: "intervention-maison-connectee.jpg",
+    description:
+      "Gestion d'éclairage, prises, volets roulants, pilotage sans fil. Domotique et confort au quotidien.",
+  },
+  {
+    title: "Informatique",
+    image: "intervention-informatique.jpg",
+    description:
+      "Dépannage matériel et logiciel, installation de postes et réseaux. Particuliers et professionnels.",
+  },
+  {
+    title: "Économie d'énergie",
+    image: null,
+    description:
+      "Conseil et solutions pour réduire votre consommation : éclairage LED, équipements performants, pilotage.",
+  },
+];
+---
+
+<section class="scroll-mt-6 px-4 py-14 sm:px-6 sm:py-20 animate-fade-in" aria-labelledby="interventions-heading">
+  <div class="mx-auto max-w-6xl">
+    <h2 id="interventions-heading" class="text-center text-2xl font-bold text-stone-900 sm:text-3xl">
+      Nos interventions
+    </h2>
+    <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {interventions.map((item, i) => (
+        <article
+          class="group rounded-2xl border border-amber-200/30 bg-white/90 overflow-hidden shadow-[0_4px_24px_rgba(28,25,23,0.08)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(28,25,23,0.12)] hover:border-amber-300/50"
+          style={`animation-delay: ${i * 80}ms`}
+        >
+          {item.image && (
+            <div class="aspect-[4/3] w-full overflow-hidden bg-stone-100">
+              <img
+                src={`/${item.image}`}
+                alt=""
+                class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                loading="lazy"
+                width="400"
+                height="300"
+              />
+            </div>
+          )}
+          <div class="p-6">
+          <h3 class="text-lg font-semibold text-stone-900">{item.title}</h3>
+          <p class="mt-3 text-stone-600">{item.description}</p>
+          <a
+            href={`tel:${site.phone}`}
+            class="mt-5 inline-flex items-center gap-1 text-sm font-medium text-amber-700 transition hover:text-amber-800 hover:gap-2"
+          >
+            Appeler pour une intervention →
+          </a>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

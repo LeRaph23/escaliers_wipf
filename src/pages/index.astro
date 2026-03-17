@@ -1,0 +1,24 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { faqItems } from "../config/faq";
+import Hero from "../components/Hero.astro";
+import BentoInterventions from "../components/BentoInterventions.tsx";
+import SocialProof from "../components/SocialProof.astro";
+import ZoneIntervention from "../components/ZoneIntervention.astro";
+import ContactSection from "../components/ContactSection.astro";
+import FAQ from "../components/FAQ.astro";
+
+const metaTitle = "Électricien urgence dépannage Helfrantzkirch | SOS Elec 7j/7";
+const metaDescription =
+  "Électricien urgence et dépannage à Helfrantzkirch et dans le Haut-Rhin. Intervention 7j/7, mise aux normes, rénovation. Devis gratuit · 06 72 04 51 06.";
+const faqForSchema = faqItems.map((item) => ({ question: item.question, answer: item.answer }));
+---
+
+<BaseLayout title={metaTitle} description={metaDescription} faqItems={faqForSchema}>
+  <Hero />
+  <BentoInterventions client:visible />
+  <SocialProof />
+  <ZoneIntervention />
+  <ContactSection />
+  <FAQ />
+</BaseLayout>

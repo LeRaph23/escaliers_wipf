@@ -1,0 +1,22 @@
+---
+import { site } from "../config/site";
+---
+
+<section class="scroll-reveal scroll-reveal--slow border-b border-[#121212]/10 px-4 py-24 sm:px-6 sm:py-32" aria-labelledby="hero-heading">
+  <div class="mx-auto max-w-6xl">
+    <div class="max-w-4xl">
+      <h1 id="hero-heading" class="font-editorial text-5xl font-normal tracking-tight text-[#121212] sm:text-6xl md:text-7xl lg:text-8xl">
+        Électricien à Helfrantzkirch : dépannage en moins d'une heure dans le Sundgau.
+      </h1>
+      <p class="mt-8 max-w-xl text-lg text-[#121212]/80">
+        {site.name} — Helfrantzkirch, Haut-Rhin. Urgence 7j/7, mise aux normes, rénovation.
+      </p>
+      <a
+        href={`tel:${site.phone}`}
+        class="mt-12 inline-block bg-[var(--accent)] px-10 py-4 text-lg font-semibold text-white border border-[var(--accent)] transition hover:bg-[#121212] hover:border-[#121212] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2"
+      >
+        Appeler {site.phoneDisplay}
+      </a>
+    </div>
+  </div>
+</section>

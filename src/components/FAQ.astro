@@ -1,0 +1,24 @@
+---
+import { faqItems } from "../config/faq";
+---
+
+<section class="scroll-reveal scroll-mt-24 border-t border-[#121212]/10 px-4 py-24 sm:px-6 sm:py-32" aria-labelledby="faq-heading">
+  <div class="mx-auto max-w-3xl">
+    <h2 id="faq-heading" class="text-left text-2xl font-bold text-[#121212] sm:text-3xl">
+      Questions fréquentes
+    </h2>
+    <ul class="mt-12 space-y-4" role="list">
+      {faqItems.map((item) => (
+        <li>
+          <details class="group rounded-2xl border border-[#121212]/10 bg-[#F8F9FA] [&_summary]:list-none">
+            <summary class="cursor-pointer px-5 py-4 font-medium text-[#121212] flex items-center justify-between gap-2">
+              <span class="pr-2">{item.question}</span>
+              <span class="shrink-0 text-[#121212]/50 transition group-open:rotate-180" aria-hidden="true">▼</span>
+            </summary>
+            <p class="border-t border-[#121212]/10 px-5 py-4 text-[#121212]/70 leading-relaxed">{item.answer}</p>
+          </details>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

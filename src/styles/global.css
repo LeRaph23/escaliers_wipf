@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-editorial: "Instrument Serif", Georgia, serif;
+}
+
+:root {
+  --bg: #F8F9FA;
+  --fg: #121212;
+  --accent: #E85D04;
+  --border: rgba(18, 18, 18, 0.08);
+}
+
+/* Fond : dégradé très doux (blanc cassé → gris très clair) pour donner du relief */
+.noise-overlay {
+  background: linear-gradient(180deg, #FAFBFC 0%, #F4F5F7 50%, #F0F1F4 100%);
+}
+
+/* Texture grain : overlay léger pour éviter le plat */
+.noise-overlay::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.font-editorial {
+  font-family: var(--font-editorial), Georgia, serif;
+}
+
+/* Scroll reveal : apparition au scroll (court pour rester fluide) */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition: opacity 0.28s ease-out, transform 0.28s ease-out;
+}
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-reveal--slow {
+  transition-duration: 0.4s;
+}
+
+/* Cartes interventions : hover sans transform pour éviter le lag (pas de couche GPU qui s’accumule) */
+.intervention-card {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.intervention-card:hover {
+  border-color: rgba(18, 18, 18, 0.2);
+  box-shadow: 0 2px 8px rgba(18, 18, 18, 0.06);
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+details summary::marker {
+  content: "";
+  display: none;
+}
