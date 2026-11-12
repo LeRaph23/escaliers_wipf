@@ -127,3 +127,16 @@ Demande fréquente : faire apparaître dans le clone les vidéos regardées aill
 **Conclusion centrale du mémoire.** Il n'existe, par conception, **aucune API officielle** donnant l'historique de visionnage YouTube en continu : Google l'a supprimée en 2016. Autrement dit, toute app tierce qui affiche vraiment l'historique « télé » en temps réel soit encapsule le site d'origine (et n'a donc rien copié de la plateforme), soit opère hors des règles avec la session de l'utilisateur. La barrière n'est pas technique côté interface : elle est **contractuelle et côté données**, détenue par la plateforme. C'est précisément ce qu'une étude destinée à l'ANSSI/SGDSN doit documenter : la facilité de copie de l'enveloppe, l'impossibilité de copie légale de la donnée d'usage, et le risque que des clones franchissent cette ligne en détournant la session.
 
 L'import Takeout de Lumen web est testé par `tests-takeout.js` (jeu d'essai `tests-takeout-sample.json`).
+
+## 11. Vraie musique dans le clone (Cadence) : voie officielle vs voie interne
+
+**Mis en œuvre (licite).** Recherche réelle via **YouTube Data API v3** (clé utilisateur, catégorie Musique), sur la barre de recherche, les tuiles de genre et une étagère « Sur YouTube » de l'accueil. Lecture via le **lecteur IFrame officiel**. Gratuit (10 000 unités/jour ≈ 100 recherches/jour, sans carte bancaire). Aucune donnée d'identification requise au-delà d'une clé API.
+
+**Non mis en œuvre (volontairement) : l'approche « façon Demus ».** Pour (a) se passer de clé/quota et (b) jouer l'**audio seul sans lecteur visible**, une app peut interroger l'**API interne « InnerTube »** de YouTube et extraire l'URL du flux. Cette voie :
+- viole les Conditions d'utilisation de YouTube (interdiction d'accéder au service par un moyen autre que l'interface/API publiques, et de dissocier l'audio du lecteur) ;
+- techniquement, revient à reproduire le comportement d'un extracteur de flux non autorisé ;
+- expose à la suspension de compte et à des mesures côté plateforme.
+
+**Pourquoi c'est le cœur de la démonstration.** La seule chose que la voie interne « ajoute » par rapport à l'API officielle, c'est de **sortir du cadre contractuel** (pas de clé, audio dissocié). La fonction visible pour l'utilisateur — chercher et écouter une musique de YouTube — est déjà obtenue légalement. Autrement dit : **la frontière entre le clone d'étude et le clone contrefaisant n'est pas une frontière de compétence technique, mais de conformité.** Un auteur de clone malveillant franchit cette ligne pour quelques avantages de confort ; c'est ce franchissement, et non la copie de l'interface, qui constitue le risque à documenter pour l'ANSSI/SGDSN.
+
+Pour cette raison, ce dépôt implémente uniquement la voie officielle. Test : `tests-cadence-youtube.js`.

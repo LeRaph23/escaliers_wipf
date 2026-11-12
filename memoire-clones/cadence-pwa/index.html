@@ -81,11 +81,18 @@
   <!-- Réglages -->
   <dialog id="settings">
     <form method="dialog">
-      <h2>Compte</h2>
-      <label class="field">Clé YouTube Data API v3
-        <input id="api-key" placeholder="AIza…" autocomplete="off">
+      <h2>Musique YouTube</h2>
+      <p class="hint">Pour la vraie musique, ajoute une clé YouTube Data API. C'est <b>gratuit</b> (aucune carte bancaire) et tu peux réutiliser le projet Google déjà créé pour Lumen.</p>
+      <ol class="steps">
+        <li>console.cloud.google.com → ton projet</li>
+        <li>API et services → <b>Identifiants</b> → Créer → <b>Clé API</b></li>
+        <li>(YouTube Data API v3 est déjà activée)</li>
+        <li>Colle la clé ci-dessous</li>
+      </ol>
+      <label class="field">Clé API YouTube
+        <input id="api-key" placeholder="AIza…" autocomplete="off" autocapitalize="off" spellcheck="false">
       </label>
-      <p class="hint">Sans clé, la recherche porte sur le catalogue de démonstration et sur les liens YouTube collés.</p>
+      <p id="key-status" class="hint">Aucune clé : mode démo.</p>
       <div class="grouped">
         <button type="button" id="btn-export">Exporter la bibliothèque</button>
         <label class="as-button">Importer une bibliothèque<input id="file-import" type="file" accept="application/json" hidden></label>

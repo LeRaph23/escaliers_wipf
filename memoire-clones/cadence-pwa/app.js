@@ -205,7 +205,14 @@ const Store = {
 };
 
 /* ---------- Catalogue YouTube ---------- */
+const GENRE_QUERY = {
+  charts: 'top hits musique', hits: 'hits du moment musique', rapfr: 'rap français', popfr: 'pop française',
+  pop: 'pop music', rap: 'rap music', rnb: 'rnb soul music', dance: 'dance music', electro: 'musique électronique',
+  chill: 'chill lofi music', live: 'live concert music', acoustic: 'acoustic session music', '80s': 'années 80 tubes',
+  '90s': 'années 90 tubes', jazz: 'jazz music', rock: 'rock music',
+};
 const Catalog = {
+  ytCache: {},
   thumb: (id) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
   parseId(text) {
     const t = text.trim();
@@ -225,13 +232,21 @@ const Catalog = {
     } catch {}
     return t;
   },
-  async search(q, key) {
+  async search(q, key, n = 25) {
     const u = new URL('https://www.googleapis.com/youtube/v3/search');
-    Object.entries({ part: 'snippet', type: 'video', videoCategoryId: '10', maxResults: '25', q, key }).forEach(([k, v]) => u.searchParams.set(k, v));
+    Object.entries({ part: 'snippet', type: 'video', videoCategoryId: '10', maxResults: String(n), q, key }).forEach(([k, v]) => u.searchParams.set(k, v));
     const r = await fetch(u); if (!r.ok) throw new Error(`API YouTube : HTTP ${r.status}`);
     const d = document.createElement('textarea'); const dec = (s) => ((d.innerHTML = s), d.value);
     return (await r.json()).items.map((it) => ({ id: it.id.videoId, title: dec(it.snippet.title),
       artist: dec(it.snippet.channelTitle).replace(/ - Topic$/, ''), thumb: it.snippet.thumbnails?.high?.url || this.thumb(it.id.videoId) }));
+  },
+  async searchCached(q, key, n = 25) {
+    if (this.ytCache[q]) return this.ytCache[q];
+    const res = await this.search(q, key, n);
+    this.ytCache[q] = res;
+    res.forEach((t) => { Store.data.known[t.id] = t; });
+    Store.save();
+    return res;
   },
   searchDemo(q) {
     const n = q.toLowerCase();
@@ -393,14 +408,25 @@ const UI = {
     const tops = Reco.topArtists(3);
     this.ctx.home = { history: h, picks, mix: fresh, smart };
     const why = tops.length ? `Parce que vous écoutez ${esc(tops.slice(0, 2).join(' et '))}` : 'Écoutez quelques titres pour personnaliser cette page';
-    $('#view-home').innerHTML = this.largeHead('Accueil') +
+    const key = Store.data.apiKey;
+    let ytShelf = '';
+    if (key) {
+      const q = tops.length ? tops[0] + ' musique' : 'nouveautés musique';
+      const yt = Catalog.ytCache[q]; this.ctx.home.yt = yt || [];
+      if (yt && yt.length) ytShelf = `<div class="section-h">Sur YouTube</div><div class="shelf" data-shelf="yt">${yt.map((t, i) => this.card(t, i)).join('')}</div>`;
+      else { ytShelf = `<div class="section-h">Sur YouTube</div><div class="yt-loading">Chargement depuis YouTube…</div>`;
+        Catalog.searchCached(q, key).then(() => { if (this.view === 'home' && !this.stack.length) this.renderHome(); }).catch(() => {}); }
+    }
+    const banner = key ? '' : `<div class="setup-card"><div><b>Active la vraie musique</b><p>Recherche et lis les vraies musiques de YouTube. Gratuit — réutilise ton projet Google.</p></div><button class="setup-btn" data-act="setup">Configurer</button></div>`;
+    $('#view-home').innerHTML = this.largeHead('Accueil') + banner +
       `<div class="section-h">Sélection pour vous</div><p class="why">${why}</p>
        <div class="shelf wide">${picks.slice(0, 4).map((t, i) => `<button class="hero" data-hero="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>Recommandé</small><b>${esc(t.title)}</b><span class="hero-sub">${esc(t.artist)}</span></div></button>`).join('')}</div>` +
       `<button class="section-h" data-open="smart">Créés pour vous ${icon('chevR')}</button><div class="shelf">${smart.map((p) => this.plCard(p)).join('')}</div>` +
       (h.length ? `<button class="section-h" data-open="history">Écoutés récemment ${icon('chevR')}</button><div class="shelf" data-shelf="history">${h.map((t, i) => this.card(t, i)).join('')}</div>` : '') +
       (pls.length ? `<button class="section-h" data-nav="playlists">Vos playlists ${icon('chevR')}</button><div class="shelf">${pls.map((p) => this.plCard(p)).join('')}</div>` : '') +
+      ytShelf +
       `<button class="section-h" data-open="discovery">À découvrir ${icon('chevR')}</button><div class="shelf" data-shelf="mix">${fresh.map((t, i) => this.card(t, i)).join('')}</div>` +
-      `<p style="text-align:center"><span class="demo-pill">Catalogue de démonstration fictif</span></p>`;
+      (key ? '' : `<p style="text-align:center"><span class="demo-pill">Mode démo — ajoute ta clé YouTube pour la vraie musique</span></p>`);
   },
   renderNew() {
     const a = demoFor('new-a'), b = demoFor('new-b');
@@ -449,7 +475,7 @@ const UI = {
     try {
       if (id) { this.searching = true; this.renderSearch(); this.results = [await Catalog.fromId(id)]; }
       else if (Store.data.apiKey) { this.searching = true; this.renderSearch(); this.results = await Catalog.search(q, Store.data.apiKey); }
-      else { this.results = Catalog.searchDemo(q); if (!this.results.length) this.searchHint = 'Sans clé API, seul le catalogue de démo est cherchable. Collez un lien YouTube ou ajoutez une clé dans Compte.'; }
+      else { this.results = Catalog.searchDemo(q); this.searchHint = 'Mode démo. Ajoute ta clé YouTube (bouton Configurer) pour chercher les vraies musiques, ou colle un lien YouTube.'; }
     } catch (e) { this.results = []; this.searchHint = e.message; }
     this.searching = false; if (q === this.query.trim()) this.renderSearch();
   },
@@ -469,8 +495,17 @@ const UI = {
     const back = `<button class="back" data-act="back">${icon('chevL')}${esc(this.backLabel())}</button>`;
     let html = back, list = [];
     if (d.type === 'genre') {
-      const g = GENRES.find((x) => x.id === d.id); list = demoFor(g.id);
-      html += this.largeHead(g.name, false) + `<div class="shelf wide">${list.slice(0, 3).map((t, i) => `<button class="hero" data-play-ctx="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>${esc(g.name)}</small><b>${esc(t.title)}</b></div></button>`).join('')}</div><div class="section-h">Morceaux populaires</div>` + this.list(list);
+      const g = GENRES.find((x) => x.id === d.id); const key = Store.data.apiKey; const q = GENRE_QUERY[g.id] || (g.name + ' musique');
+      if (key) {
+        list = Catalog.ytCache[q] || [];
+        if (!list.length) Catalog.searchCached(q, key).then(() => { const top = this.stack.at(-1); if (top && top.type === 'genre' && top.id === d.id) this.renderDetail(); }).catch((e) => { this._ytErr = e.message; const top = this.stack.at(-1); if (top && top.type === 'genre' && top.id === d.id) this.renderDetail(); });
+      } else list = demoFor(g.id);
+      html += this.largeHead(g.name, false);
+      if (key && !list.length) html += this._ytErr ? `<div class="empty"><b>Erreur YouTube</b>${esc(this._ytErr)}</div>` : `<div class="yt-loading">Recherche sur YouTube…</div>`;
+      else {
+        html += `<div class="shelf wide">${list.slice(0, 3).map((t, i) => `<button class="hero" data-play-ctx="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>${esc(g.name)}</small><b>${esc(t.title)}</b></div></button>`).join('')}</div><div class="section-h">${key ? 'Sur YouTube' : 'Morceaux populaires'}</div>` + this.list(list);
+      }
+      if (!key) html += `<div class="setup-inline"><span>Catalogue de démonstration.</span><button data-act="setup">Activer la vraie musique</button></div>`;
     } else if (d.type === 'playlist') {
       const smart = d.id.startsWith('smart:');
       const pl = smart ? Reco.smart().find((p) => p.id === d.id) : Store.data.playlists.find((p) => p.id === d.id); if (!pl) return this.pop();
@@ -509,7 +544,7 @@ const UI = {
     $$('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
   },
   go(view) {
-    if (this.view === view && !this.stack.length) { $('#scroller').scrollTo({ top: 0, behavior: 'smooth' }); this.renderView(view); if (view === 'search') { this.query = ''; const q = $('#q'); if (q) { q.value = ''; q.focus(); } this.renderSearch(); } return; }
+    if (this.view === view && !this.stack.length) { $('#scroller').scrollTo({ top: 0, behavior: 'smooth' }); this.renderView(view); this.show(view); if (view === 'search') { this.query = ''; const q = $('#q'); if (q) { q.value = ''; q.focus(); } this.renderSearch(); } return; }
     this.view = view; this.stack = []; this.renderView(view); this.show(view); $('#scroller').scrollTop = 0; this.renderTabs(); this.compact(false);
   },
   renderView(v) { ({ home: () => this.renderHome(), new: () => this.renderNew(), library: () => this.renderLibrary(), search: () => this.renderSearch() })[v](); },
@@ -617,6 +652,13 @@ const UI = {
       };
     });
   },
+  updateKeyStatus() {
+    const el = document.getElementById('key-status'); if (!el) return;
+    const k = document.getElementById('api-key').value.trim();
+    if (!k) { el.textContent = 'Aucune clé : mode démo.'; el.className = 'hint'; }
+    else if (/^AIza[\w-]{30,}$/.test(k)) { el.textContent = '✓ Format de clé valide.'; el.className = 'hint ok'; }
+    else { el.textContent = 'Format inhabituel (une clé commence par « AIza »).'; el.className = 'hint warn'; }
+  },
   toast(msg) {
     let el = $('#toast'); if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el);
       Object.assign(el.style, { position: 'fixed', left: '50%', top: 'calc(env(safe-area-inset-top,0px) + 14px)', transform: 'translateX(-50%)', zIndex: 80, padding: '10px 18px', borderRadius: '20px', fontSize: '15px', fontWeight: 500, background: 'var(--glass)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: 'var(--shadow)', transition: 'opacity .25s', pointerEvents: 'none' }); }
@@ -641,7 +683,7 @@ const UI = {
       }
       const card = el.closest('[data-card]'); if (card) {
         const sh = card.closest('[data-shelf]')?.dataset.shelf;
-        const list = { history: Store.data.history, mix: this.ctx.home?.mix, new: this.ctx.new?.a, lib: Store.data.library, ctx: this.ctx.detail }[sh] || [];
+        const list = { history: Store.data.history, mix: this.ctx.home?.mix, yt: this.ctx.home?.yt, new: this.ctx.new?.a, lib: Store.data.library, ctx: this.ctx.detail }[sh] || [];
         return Player.playList(list, +card.dataset.card);
       }
       const hero = el.closest('[data-hero]'); if (hero) return Player.playList(this.ctx.home.picks, +hero.dataset.hero);
@@ -654,7 +696,7 @@ const UI = {
       const ar = el.closest('[data-artist]'); if (ar) return this.push({ type: 'artist', id: ar.dataset.artist });
       const sc = el.closest('[data-scope]'); if (sc) { this.scope = sc.dataset.scope; return this.renderSearch(); }
       const act = el.closest('[data-act]')?.dataset.act;
-      if (act === 'settings') { $('#api-key').value = Store.data.apiKey; return $('#settings').showModal(); }
+      if (act === 'settings' || act === 'setup') { $('#api-key').value = Store.data.apiKey; this.updateKeyStatus(); return $('#settings').showModal(); }
       if (act === 'back') return this.pop();
       if (act === 'autoplay') { Store.data.autoplay = !Store.data.autoplay; Store.save(); this.toast(Store.data.autoplay ? 'Lecture automatique activée' : 'Lecture automatique désactivée'); return this.renderQueue(); }
       if (act === 'pl-play' || act === 'ctx-play') return Player.playList(this.ctx.detail);
@@ -688,7 +730,12 @@ const UI = {
     $('.float-close').innerHTML = icon('close'); $('.float-close').onclick = () => Player.stop();
     $('#float-video').addEventListener('dblclick', () => this.openNP());
 
-    $('#settings').onclose = () => { Store.data.apiKey = $('#api-key').value.trim(); Store.save(); };
+    $('#settings').onclose = () => {
+      const k = $('#api-key').value.trim(); const changed = k !== Store.data.apiKey;
+      Store.data.apiKey = k; Store.save();
+      if (changed) { Catalog.ytCache = {}; this._ytErr = ''; this.rerender(); if (k) this.toast('Clé enregistrée — vraie musique activée'); }
+    };
+    $('#api-key').addEventListener('input', () => this.updateKeyStatus());
     $('#btn-export').onclick = () => {
       const blob = new Blob([JSON.stringify({ library: Store.data.library, playlists: Store.data.playlists }, null, 2)], { type: 'application/json' });
       const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'cadence-bibliotheque.json' }); a.click(); URL.revokeObjectURL(a.href);

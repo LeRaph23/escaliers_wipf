@@ -264,3 +264,17 @@ button.section-h { width: 100%; text-align: left; color: var(--label); }
 .q-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .q-auto { height: 30px; padding: 0 12px; border-radius: 15px; background: rgba(255,255,255,.16); font-size: 13px; font-weight: 600; color: rgba(255,255,255,.75); flex: none; margin-top: 4px; }
 .q-auto.on { background: #fff; color: #111; }
+
+/* Vraie musique : bannière de configuration, étapes, chargement */
+.setup-card { display: flex; align-items: center; gap: 12px; margin: 8px 0 18px; padding: 14px 16px; border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--bg2)), var(--bg2)); }
+.setup-card b { font: 600 16px var(--display); }
+.setup-card p { margin: 3px 0 0; font-size: 13px; color: var(--label2); }
+.setup-btn { flex: none; height: 38px; padding: 0 16px; border-radius: 19px; background: var(--accent); color: #fff; font-weight: 600; }
+.setup-inline { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin: 16px 0; padding: 12px 14px; border-radius: 12px; background: var(--fill); font-size: 13px; color: var(--label2); }
+.setup-inline button { height: 34px; padding: 0 14px; border-radius: 17px; background: var(--accent); color: #fff; font-weight: 600; }
+.yt-loading { padding: 28px 16px; text-align: center; color: var(--label2); font-size: 14px; }
+.steps { margin: 6px 0 12px; padding-left: 20px; font-size: 13px; color: var(--label2); display: grid; gap: 5px; }
+.steps b { color: var(--label); font-weight: 500; }
+.hint.ok { color: #34c759; } .hint.warn { color: #ff9f0a; }
