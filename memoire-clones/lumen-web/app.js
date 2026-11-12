@@ -56,6 +56,7 @@ const P = {
   live: `<circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9M4.6 4.6a10.5 10.5 0 0 0 0 14.8M19.4 4.6a10.5 10.5 0 0 1 0 14.8" ${S}/>`,
   upload: `<path d="M12 16V4m-4.5 4.5L12 4l4.5 4.5M5 20h14" ${S}/>`,
   dislikeF: '<path d="M16.5 3.5h3v10h-3zM16.5 13.5l-3.6 6.3a1.6 1.6 0 0 1-2.9-1.2l.9-4.1H5.5a2 2 0 0 1-2-2.4l1.4-6.6a2 2 0 0 1 2-1.5h9.6z" fill="currentColor"/>',
+  google: `<path d="M20 12.2c0-.6 0-1.1-.1-1.6H12v3.1h4.5a3.9 3.9 0 0 1-1.7 2.5v2h2.7c1.6-1.4 2.5-3.5 2.5-6z" fill="currentColor"/><path d="M12 20.5c2.3 0 4.2-.8 5.5-2.1l-2.7-2a5 5 0 0 1-7.5-2.7H4.5v2.1A8.5 8.5 0 0 0 12 20.5z" fill="currentColor" opacity=".8"/><path d="M7.3 13.7a5 5 0 0 1 0-3.4V8.2H4.5a8.5 8.5 0 0 0 0 7.6z" fill="currentColor" opacity=".6"/><path d="M12 6.9c1.3 0 2.5.4 3.4 1.3l2.5-2.5A8.5 8.5 0 0 0 4.5 8.2l2.8 2.1A5 5 0 0 1 12 6.9z" fill="currentColor" opacity=".9"/>`,
   fullscreen: `<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" ${S}/>`,
 };
 const ic = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
@@ -101,6 +102,11 @@ function thumb(seed, w = 320, h = 180, title = '') {
     <radialGradient id="vg" cx=".5" cy=".5" r=".7"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient></defs>${sc}<rect width="${w}" height="${h}" fill="url(#vg)"/>${text}</svg>`;
   const u = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); cache.set(k, u); return u;
 }
+function vimg(v, w = 320, h = 180) {
+  const fb = thumb(v.id, w, h, v.title);
+  return v.thumbUrl ? `<img src="${esc(v.thumbUrl)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fb}'">` : `<img src="${fb}" alt="">`;
+}
+const avatarImg = (url, name, cls = '') => url ? `<span class="avatar ${cls}" style="background:linear-gradient(140deg, hsl(${hash(name) % 360} 65% 58%), hsl(${(hash(name) + 50) % 360} 60% 38%))">${esc((name || '?')[0])}<img src="${esc(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></span>` : avatar(name, cls);
 const avatarColor = (name) => `hsl(${hash(name) % 360} 55% 45%)`;
 const avatar = (name, cls = '') => `<span class="avatar ${cls}" style="background:linear-gradient(140deg, hsl(${hash(name) % 360} 65% 58%), hsl(${(hash(name) + 50) % 360} 60% 38%))">${esc(name[0])}</span>`;
 
@@ -155,7 +161,7 @@ const UI = {
     $('#nav').innerHTML = items.map(([k, l, i, f]) => {
       const on = this.page === k || (k === this.prev && !['home', 'clips', 'subs', 'you'].includes(this.page));
       if (k === 'create') return `<button class="nav-item create" data-go="create" aria-label="Créer">${ic('create')}</button>`;
-      if (k === 'you') return `<button class="nav-item${on ? ' on' : ''}" data-go="you">${avatar('Raphaël', 'me')}<span>${l}</span></button>`;
+      if (k === 'you') return `<button class="nav-item${on ? ' on' : ''}" data-go="you">${Google.signedIn && Google.user ? avatarImg(Google.user.picture, Google.user.name || 'G', 'me') : avatar('Invité', 'me')}<span>${l}</span></button>`;
       return `<button class="nav-item${on ? ' on' : ''}" data-go="${k}">${ic(on ? f : i)}<span>${l}</span></button>`;
     }).join('');
     $('#nav').style.display = this.page === 'clips' ? 'flex' : '';
@@ -163,13 +169,13 @@ const UI = {
   },
   card(v) {
     return `<article class="video" data-v="${v.id}">
-      <div class="thumb"><img src="${thumb(v.id, 320, 180, v.title)}" alt=""><span class="dur${v.live ? ' live' : ''}">${v.dur}</span>${v.watched ? `<span class="progress" style="width:${v.watched}%"></span>` : ''}</div>
+      <div class="thumb">${vimg(v)}<span class="dur${v.live ? ' live' : ''}">${v.dur}</span>${v.watched ? `<span class="progress" style="width:${v.watched}%"></span>` : ''}</div>
       <div class="vmeta"><span data-ch="${esc(v.channel)}">${avatar(v.channel)}</span><div class="vtext"><div class="vtitle">${esc(v.title)}</div>
       <div class="vsub"><span data-ch="${esc(v.channel)}">${esc(v.channel)}</span> · ${v.live ? `${fmtN(Math.floor(v.views / 50))} spectateurs` : `${fmtN(v.views)} vues · ${fmtAgo(v.ago)}`}</div></div>
       <button class="kebab" data-menu="${v.id}" aria-label="Plus d'actions">${ic('more')}</button></div></article>`;
   },
   resultRow(v, kind) {
-    return `<div class="result" data-v="${v.id}"><div class="thumb"><img src="${thumb(v.id, 320, 180, v.title)}" alt=""><span class="dur${v.live ? ' live' : ''}">${v.dur}</span></div><div class="vtext"><div class="vtitle">${esc(v.title)}</div><div class="vsub">${esc(v.channel)}<br>${fmtN(v.views)} vues · ${fmtAgo(v.ago)}</div></div>${kind ? `<button class="kebab" data-rm="${kind}:${v.id}" aria-label="Retirer">${ic('close')}</button>` : `<button class="kebab" data-menu="${v.id}" aria-label="Plus d'actions">${ic('more')}</button>`}</div>`;
+    return `<div class="result" data-v="${v.id}"><div class="thumb">${vimg(v)}<span class="dur${v.live ? ' live' : ''}">${v.dur}</span></div><div class="vtext"><div class="vtitle">${esc(v.title)}</div><div class="vsub">${esc(v.channel)}<br>${fmtN(v.views)} vues · ${fmtAgo(v.ago)}</div></div>${kind ? `<button class="kebab" data-rm="${kind}:${v.id}" aria-label="Retirer">${ic('close')}</button>` : `<button class="kebab" data-menu="${v.id}" aria-label="Plus d'actions">${ic('more')}</button>`}</div>`;
   },
   clipShelf() {
     return `<div class="shelf-h">${ic('clipsF')}Clips</div><div class="clip-shelf">${CLIPS.slice(0, 4).map((c) =>
@@ -208,6 +214,13 @@ const UI = {
       `<div class="clip-top"><button class="ib" data-act="search" style="color:#fff">${ic('search')}</button><button class="ib" data-act="clipmenu" style="color:#fff">${ic('more')}</button></div>`;
   },
   subs() {
+    if (Google.signedIn && Google.subs.length) {
+      $('#page-subs').innerHTML = `<header class="appbar">${$('.brand').outerHTML}<div class="appbar-actions"><button class="ib" data-act="search">${ic('search')}</button></div></header>
+        <div class="subs-row">${Google.subs.map((c) => `<button data-ych="${esc(c.id)}">${avatarImg(c.thumb, c.name)}<span>${esc(c.name)}</span></button>`).join('')}</div>
+        <div class="list-meta">${Google.subs.length} abonnements YouTube · touchez une chaîne pour voir ses vidéos</div>
+        ${Google.liked.length ? `<div class="feed">${Google.liked.slice(0, 10).map((v) => this.card(v)).join('')}</div>` : ''}`;
+      return;
+    }
     const chans = St.subs.length ? St.subs : [];
     const vids = VIDEOS.filter((v) => chans.includes(v.channel));
     $('#page-subs').innerHTML = `<header class="appbar">${$('.brand').outerHTML}<div class="appbar-actions"><button class="ib" data-act="search">${ic('search')}</button></div></header>` +
@@ -215,12 +228,20 @@ const UI = {
         : `<div class="empty"><b>Aucun abonnement</b>Abonnez-vous à des chaînes pour voir leurs dernières vidéos ici.</div>`);
   },
   you() {
-    const hist = St.history.map((id) => VIDEOS.find((v) => v.id === id)).filter(Boolean);
-    const mini = (v) => `<div class="mini-v" data-v="${v.id}"><div class="thumb"><img src="${thumb(v.id, 320, 180, v.title)}" alt=""><span class="dur">${v.dur}</span></div><div class="vtitle">${esc(v.title)}</div><div class="vsub">${esc(v.channel)}</div></div>`;
+    const hist = St.history.map(byId).filter(Boolean);
+    const mini = (v) => `<div class="mini-v" data-v="${v.id}"><div class="thumb">${vimg(v)}<span class="dur">${v.dur}</span></div><div class="vtitle">${esc(v.title)}</div><div class="vsub">${esc(v.channel)}</div></div>`;
     $('#page-you').innerHTML = `<header class="appbar"><span></span><div class="appbar-actions"><button class="ib" data-act="cast" aria-label="Diffuser">${ic('cast')}</button><button class="ib" data-act="search">${ic('search')}</button><button class="ib" data-act="settings">${ic('gear')}</button></div></header>
-      <div class="you-head">${avatar('Raphaël', 'xl')}<div><h2>Raphaël</h2><small>@raphael · ${St.history.length} vidéos regardées</small></div></div>
+      ${Google.signedIn && Google.user ? `<div class="you-head">${avatarImg(Google.user.picture, Google.user.name || 'G', 'xl')}<div><h2>${esc(Google.user.name || '')}</h2><small>${esc(Google.user.email || '')} · Compte Google connecté</small></div></div>
+        <div class="g-bar"><span class="g-ok">${ic('shield')}Accès en lecture seule · expire dans ${Math.max(1, Math.round((Google.expires - Date.now()) / 60000))} min</span><button class="g-out" data-act="gsignout">Se déconnecter</button></div>`
+      : `<div class="you-head">${avatar('Invité', 'xl')}<div><h2>Invité</h2><small>${St.history.length} vidéos regardées sur cet appareil</small></div></div>
+        <div class="g-card"><p>Connectez votre compte Google pour retrouver vos abonnements, vidéos « J'aime » et playlists YouTube.</p>
+        <button class="g-btn" data-act="gsignin">${ic('google')}Se connecter avec Google</button>
+        <small>Vous vous identifiez sur la page de Google : Lumen ne voit jamais votre mot de passe. Accès en lecture seule, révocable à tout moment.</small></div>`}
+      ${Google.loading ? '<div class="g-loading">Synchronisation avec votre compte…</div>' : ''}${Google.error ? `<div class="g-err">${esc(Google.error)}</div>` : ''}
+      ${Google.signedIn && Google.liked.length ? `<div class="sec-h">Vidéos « J'aime » sur YouTube <button data-list="gliked">Tout afficher</button></div><div class="hscroll">${Google.liked.slice(0, 10).map(mini).join('')}</div>` : ''}
+      ${Google.signedIn && Google.playlists.length ? `<div class="sec-h">Vos playlists YouTube</div><div class="hscroll">${Google.playlists.map((p) => `<div class="mini-v" data-ypl="${esc(p.id)}"><div class="thumb">${p.thumb ? `<img src="${esc(p.thumb)}" alt="" onerror="this.onerror=null;this.src='${thumb(p.id, 320, 180, p.name)}'">` : `<img src="${thumb(p.id, 320, 180, p.name)}" alt="">`}<span class="dur">${p.count} vidéos</span></div><div class="vtitle">${esc(p.name)}</div></div>`).join('')}</div>` : ''}
       <div class="sec-h">Historique <button data-list="history">Tout afficher</button></div>${hist.length ? `<div class="hscroll">${hist.map(mini).join('')}</div>` : '<div class="vsub" style="padding:0 12px">Les vidéos regardées apparaîtront ici.</div>'}
-      <div class="sec-h">À regarder plus tard <button data-list="later">Tout afficher</button></div>${St.later.length ? `<div class="hscroll">${St.later.map((id) => mini(VIDEOS.find((v) => v.id === id))).join('')}</div>` : '<div class="vsub" style="padding:0 12px">Rien pour l\'instant.</div>'}
+      <div class="sec-h">À regarder plus tard <button data-list="later">Tout afficher</button></div>${St.later.length ? `<div class="hscroll">${St.later.map(byId).filter(Boolean).map(mini).join('')}</div>` : '<div class="vsub" style="padding:0 12px">Rien pour l\'instant.</div>'}
       <div class="menu-list" style="margin-top:12px;border-top:1px solid var(--line)"><button data-list="liked">${ic('likeF')}Vidéos « J'aime » (${St.liked.length})</button><button data-list="downloads">${ic('download')}Téléchargements (${St.downloads.length})</button><button data-act="adblock">${ic('shield')}Bloqueur de publicités : ${St.adblock === false ? 'désactivé' : 'actif'}</button><button data-act="watchtime">${ic('clock')}Temps de visionnage</button><button data-act="settings">${ic('gear')}Paramètres de lecture</button></div>`;
   },
   sheet(v) {
@@ -274,7 +295,7 @@ const Reco = {
     .map((v) => [this.score(v, p) + (v.cat === cur.cat ? 1 : 0) + (v.channel === cur.channel ? .5 : 0), v]).sort((a, b) => b[0] - a[0]).map((x) => x[1]); },
   why(v) { const p = this.profile(); if (St.subs.includes(v.channel)) return 'De vos abonnements'; if ((p.cat[v.cat] || 0) > .3) return `Parce que vous regardez : ${v.cat}`; return ''; },
 };
-const byId = (id) => VIDEOS.find((v) => v.id === id) || CLIPS.find((v) => v.id === id);
+const byId = (id) => VIDEOS.find((v) => v.id === id) || CLIPS.find((v) => v.id === id) || Google.videos.get(id);
 
 /* Contenus dérivés (descriptions, chapitres, commentaires) générés de façon déterministe */
 const NAMES = ['Camille', 'Yanis', 'Léa', 'Mehdi', 'Inès', 'Hugo', 'Sarah', 'Tom', 'Nora', 'Lucas', 'Chloé', 'Adam'];
@@ -341,6 +362,17 @@ const Sheets = {
     openSheet(`<div class="sh-title">Temps de visionnage</div><div class="wt"><b>${Math.round(avg / 60)} min</b><small>Moyenne quotidienne (7 derniers jours)</small>
       <div class="wt-bars">${days.map((d, i) => `<div><span style="height:${(d / max) * 100}%"></span><small>${['D', 'L', 'M', 'M', 'J', 'V', 'S'][new Date(Date.now() - (6 - i) * 864e5).getDay()]}</small></div>`).join('')}</div></div>`);
   },
+  googleSetup() {
+    openSheet(`<div class="sh-title">Configurer la connexion Google</div>
+      <ol class="g-steps"><li>Google Cloud Console › API et services › activer <b>YouTube Data API v3</b>.</li>
+      <li>Écran de consentement OAuth : type « Externe », statut « Test », ajoutez votre adresse comme utilisateur test.</li>
+      <li>Identifiants › Créer › <b>ID client OAuth</b> › Application Web › origine JavaScript autorisée : <code>${esc(location.origin)}</code></li>
+      <li>Collez l'ID client ci-dessous (ce n'est pas un secret).</li></ol>
+      <form id="g-form" class="g-form"><input id="g-id" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(Google.clientId())}" autocomplete="off"><button class="sub-btn">Enregistrer</button></form>`);
+    $('#g-form').onsubmit = (e) => { e.preventDefault(); const v = $('#g-id').value.trim();
+      if (!/^[\w-]+\.apps\.googleusercontent\.com$/.test(v)) return toast('Format attendu : …apps.googleusercontent.com');
+      localStorage.setItem('lumen.gclient', v); closeSheet(); toast('ID client enregistré'); Google.signIn(); };
+  },
   share(v, t) {
     const url = `${location.origin}${location.pathname}?v=${v.id}${t ? `&t=${Math.floor(t)}` : ''}`;
     if (navigator.share) navigator.share({ title: v.title, url }).catch(() => {}); else { navigator.clipboard?.writeText(url).catch(() => {}); toast(t ? `Lien copié (à ${ts(t)})` : 'Lien copié'); }
@@ -360,11 +392,26 @@ const Pages = {
       ${vids.map((v) => UI.resultRow(v)).join('')}`;
     UI.go('channel');
   },
+  async ytChannel(id) {
+    $('#page-channel').innerHTML = `<header class="appbar"><button class="ib" data-act="back">${ic('back')}</button><span class="ap-title">Chargement…</span></header><div class="g-loading">Chargement de la chaîne…</div>`; UI.go('channel');
+    try {
+      const c = await Google.channelUploads(id);
+      $('#page-channel').innerHTML = `<header class="appbar"><button class="ib" data-act="back">${ic('back')}</button><span class="ap-title">${esc(c.name)}</span><button class="ib" data-act="search">${ic('search')}</button></header>
+        <div class="ch-head">${avatarImg(c.thumb, c.name, 'xl')}<div><h2>${esc(c.name)}</h2><small>${fmtN(c.subs)} abonnés · ${fmtN(c.count)} vidéos · données YouTube</small></div></div>
+        <div class="ch-tabs"><span class="on">Vidéos</span></div>${c.videos.map((v) => UI.resultRow(v)).join('')}`;
+    } catch (e) { $('#page-channel .g-loading').outerHTML = `<div class="g-err">${esc(e.message)}</div>`; }
+  },
+  async ytPlaylist(id) {
+    const p = Google.playlists.find((x) => x.id === id);
+    $('#page-list').innerHTML = `<header class="appbar"><button class="ib" data-act="back">${ic('back')}</button><span class="ap-title">${esc(p?.name || 'Playlist')}</span><span style="width:40px"></span></header><div class="g-loading">Chargement…</div>`; UI.go('list');
+    try { const vids = await Google.playlistItems(id); $('#page-list .g-loading').outerHTML = `<div class="list-meta">${vids.length} vidéos · playlist YouTube</div>` + vids.map((v) => UI.resultRow(v)).join(''); }
+    catch (e) { $('#page-list .g-loading').outerHTML = `<div class="g-err">${esc(e.message)}</div>`; }
+  },
   list(kind) {
-    const map = { history: ['Historique', St.history], later: ['À regarder plus tard', St.later], liked: ["Vidéos « J'aime »", St.liked], downloads: ['Téléchargements', St.downloads] };
+    const map = { gliked: ["Vidéos « J'aime » (YouTube)", Google.liked.map((v) => v.id)], history: ['Historique', St.history], later: ['À regarder plus tard', St.later], liked: ["Vidéos « J'aime »", St.liked], downloads: ['Téléchargements', St.downloads] };
     const [title, ids] = map[kind]; const vids = ids.map(byId).filter(Boolean);
     $('#page-list').innerHTML = `<header class="appbar"><button class="ib" data-act="back">${ic('back')}</button><span class="ap-title">${title}</span><span style="width:40px"></span></header>
-      ${vids.length ? `<div class="list-meta">${vids.length} vidéo${vids.length > 1 ? 's' : ''}${kind === 'downloads' ? ' · disponibles hors connexion (démo)' : ''}</div>` + vids.map((v) => UI.resultRow(v, kind)).join('') : `<div class="empty"><b>Rien ici</b>Cette liste est vide pour l'instant.</div>`}`;
+      ${vids.length ? `<div class="list-meta">${vids.length} vidéo${vids.length > 1 ? 's' : ''}${kind === 'downloads' ? ' · disponibles hors connexion (démo)' : ''}</div>` + vids.map((v) => UI.resultRow(v, kind === 'gliked' ? '' : kind)).join('') : `<div class="empty"><b>Rien ici</b>Cette liste est vide pour l'instant.</div>`}`;
     UI.go('list');
   },
 };
@@ -433,7 +480,7 @@ document.addEventListener('click', (e) => {
   const chip = t.closest('[data-chip]'); if (chip) { if (UI.chip === chip.dataset.chip) return UI.refresh(); UI.chip = chip.dataset.chip; UI.home(); window.scrollTo(0, 0); return; }
   const sub = t.closest('[data-sub]'); if (sub) { e.stopPropagation(); const c = sub.dataset.sub; const on = toggleIn('subs', c); toast(on ? `Abonné à ${c}` : 'Abonnement annulé');
     return ({ watch: () => Watch.renderInfo(), clips: () => UI.clips(), channel: () => Pages.channel(c) })[UI.page]?.(); }
-  const ch = t.closest('[data-ch]'); if (ch) { e.stopPropagation(); return Pages.channel(ch.dataset.ch); }
+  const ch = t.closest('[data-ch]'); if (ch) { e.stopPropagation(); const rv = byId(ch.closest('[data-v]')?.dataset.v) || (UI.page === 'watch' ? Watch.v : null); if (rv?.channelId && Google.signedIn) return Pages.ytChannel(rv.channelId); return Pages.channel(ch.dataset.ch); }
   const like = t.closest('[data-like]'); if (like) { const id = like.dataset.like; const on = toggleIn('liked', id); if (on && St.disliked.includes(id)) toggleIn('disliked', id);
     toast(on ? 'Ajoutée aux vidéos « J\'aime »' : 'Retirée des vidéos « J\'aime »'); return UI.page === 'watch' ? Watch.renderInfo() : UI.clips(); }
   const dis = t.closest('[data-dislike]'); if (dis) { const id = dis.dataset.dislike; const on = toggleIn('disliked', id); if (on && St.liked.includes(id)) toggleIn('liked', id);
@@ -446,6 +493,8 @@ document.addEventListener('click', (e) => {
   const desc = t.closest('[data-desc]'); if (desc) return desc.classList.toggle('open');
   if (t.closest('[data-comments]')) return Sheets.comments(Watch.v);
   const cc = t.closest('[data-ccom]'); if (cc) return Sheets.comments(byId(cc.dataset.ccom));
+  const ych = t.closest('[data-ych]'); if (ych) return Pages.ytChannel(ych.dataset.ych);
+  const ypl = t.closest('[data-ypl]'); if (ypl) return Pages.ytPlaylist(ypl.dataset.ypl);
   const lst = t.closest('[data-list]'); if (lst) return Pages.list(lst.dataset.list);
   const rm = t.closest('[data-rm]'); if (rm) { e.stopPropagation(); const [k, id] = rm.dataset.rm.split(':'); const key = { history: 'history', later: 'later', liked: 'liked', downloads: 'downloads' }[k];
     St[key] = St[key].filter((x) => x !== id); save(); toast('Retiré de la liste'); return Pages.list(k); }
@@ -464,6 +513,8 @@ document.addEventListener('click', (e) => {
   if (act === 'settings') return Sheets.settings();
   if (act === 'explore') return Sheets.explore();
   if (act === 'watchtime') return Sheets.watchTime();
+  if (act === 'gsignin') return Google.signIn();
+  if (act === 'gsignout') return Google.signOut();
   if (act === 'adblock') { St.adblock = St.adblock === false; save(); toast(`Bloqueur de publicités ${St.adblock ? 'activé' : 'désactivé'}`); return UI.you(); }
   if (act === 'clipmenu') return Sheets.settings();
   if (act === 'voice') {
@@ -486,4 +537,4 @@ if (new URLSearchParams(location.search).get('t')) setTimeout(() => { Watch.t = 
 const start = new URLSearchParams(location.search);
 UI.go(start.get('p') || 'home');
 if (start.get('v')) Watch.open(VIDEOS.find((v) => v.id === start.get('v')) || VIDEOS[0]);
-window.Lumen = { UI, Watch, VIDEOS, St, Pages, Reco, Sheets };
+window.Lumen = { UI, Watch, VIDEOS, St, Pages, Reco, Sheets, Google };

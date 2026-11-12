@@ -282,3 +282,26 @@ body.dark-nav .bottom-nav { --bg: #0f0f0f; background: #0f0f0f; color: #f1f1f1; 
 @keyframes cp { to { width: 100% } }
 .clip::before { content: ""; position: absolute; inset: 0 0 auto; height: 90px; background: linear-gradient(rgba(0,0,0,.4), transparent); z-index: 1; pointer-events: none; }
 .vsub [data-ch], .vmeta [data-ch] { cursor: pointer; }
+
+/* ---------- Compte Google ---------- */
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.g-card { margin: 0 12px 8px; padding: 16px; border-radius: 12px; background: var(--chip); }
+.g-card p { margin: 0 0 12px; font-size: 14px; }
+.g-card small { display: block; margin-top: 10px; color: var(--t2); font-size: 12px; line-height: 1.45; }
+.g-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 44px; border-radius: 22px;
+  background: var(--bg); border: 1px solid var(--line); font-weight: 500; font-size: 15px; }
+.g-btn svg { width: 20px; height: 20px; }
+.g-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -4px 12px 8px; }
+.g-ok { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2); }
+.g-ok svg { width: 16px; height: 16px; color: #1e8e3e; }
+.g-out { white-space: nowrap; flex: none; height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--line); font-size: 13px; font-weight: 500; }
+.g-loading, .g-err { margin: 8px 12px; padding: 12px; border-radius: 10px; font-size: 13px; background: var(--chip); }
+.g-err { color: #c5221f; }
+.g-steps { margin: 0 16px 12px 32px; padding: 0; font-size: 13px; color: var(--t2); display: grid; gap: 6px; }
+.g-steps b { color: var(--t1); font-weight: 500; }
+.g-steps code { font-size: 12px; background: var(--chip); padding: 1px 4px; border-radius: 4px; }
+.g-form { display: flex; gap: 8px; padding: 0 16px 12px; }
+.g-form input { flex: 1; min-width: 0; height: 36px; border: 1px solid var(--line); border-radius: 18px; padding: 0 14px; background: var(--bg); color: var(--t1); font: 14px var(--font); }
+
+.avatar { position: relative; }
+.avatar img { position: absolute; inset: 0; }
