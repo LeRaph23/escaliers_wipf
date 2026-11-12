@@ -63,3 +63,23 @@ La copie en tant que telle relève surtout de la propriété intellectuelle. L'e
 - La stack est **inférée**, pas vérifiée. Une analyse dynamique légale (proxy sur son propre appareil, sans contournement) pourrait la confirmer.
 - Lumen n'a pas été compilé. Les erreurs résiduelles éventuelles font partie du coût réel de reproduction et sont à mesurer.
 - Un seul éditeur et deux apps : on ne peut pas généraliser sans élargir l'échantillon.
+
+## 6. Itérations de design (tests visuels automatisés)
+
+Méthode : Chromium headless émulant un iPhone 15 Pro, scénario Playwright scripté (navigation, lecture, menus), captures en clair et en sombre, correction, recapture. Planches dans `captures/`.
+
+| Itération | Défaut détecté sur capture | Correction |
+|---|---|---|
+| Cadence 1 | Pochette « À l'écoute » débordant sur la poignée de fermeture (écrans courts) | Taille contrainte par la hauteur (`container-type: size`, `min(100cqw, 100cqh)`) |
+| Cadence 2 | En mode file d'attente, titre superposé à la liste | En-tête compact (pochette + titre) comme sur le modèle observé |
+| Cadence 3 | Pochette encore affichée en mode file (`display:flex` l'emportait sur `[hidden]`) | Règle `[hidden]` explicite |
+| Lumen 1 | Icônes de la barre du haut absentes | Injection des icônes au démarrage |
+| Lumen 2 | Barre du bas claire sur le flux vertical sombre ; badge « démo » sur les contrôles | Thème sombre contextuel ; badge masqué quand les contrôles s'affichent |
+
+**Constat.** Environ 5 allers-retours capture → correction suffisent pour atteindre un rendu proche d'une app native. Ce qui *n'est pas* reproduit, et ne doit pas l'être : nom, logo, couleur signature, icônes propriétaires (SF Symbols), photos d'artistes. C'est précisément ce qui distingue une **étude de conventions d'interface** (licite) d'une **contrefaçon de marque / page de phishing** (art. L713-2 CPI ; art. 226-4-1 et 313-1 du code pénal selon l'usage).
+
+**Point pour le volet sécurité.** Le coût pour franchir ce dernier pas (remplacer le nom et la couleur par ceux de la cible) est quasi nul une fois la structure reproduite. La protection ne peut donc pas reposer sur la difficulté de copie du design. Elle repose sur la distribution (stores, domaines, certificats) et sur la détection (similarité visuelle de pages, surveillance des noms de domaine, signalements).
+
+## 7. Contrainte légale observée : visibilité du lecteur
+
+Les CGU de l'API YouTube imposent un lecteur visible d'au moins 200×200 px. Cadence respecte cette contrainte : quand l'écran « À l'écoute » est fermé, une vignette vidéo flottante reste affichée. Résultat : l'expérience est visiblement *moins bonne* que celle d'un lecteur musical classique (lecture audio seule, écran verrouillé). **Hypothèse à vérifier :** les apps de ce segment qui offrent une écoute audio pure, sans vidéo visible, s'écartent probablement de ces CGU ou utilisent des API non documentées. L'écart d'expérience entre la version conforme et l'original est en soi un indicateur.

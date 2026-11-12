@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)">
+  <title>Lumen</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Fil d'accueil -->
+  <div id="page-home" class="page active">
+    <header class="appbar">
+      <a class="brand" href="#" data-act="home" aria-label="Lumen, accueil">
+        <svg viewBox="0 0 32 32" class="brand-mark" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--brand)"/><circle cx="16" cy="16" r="7.5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="16" cy="16" r="2.6" fill="#fff"/></svg>
+        <span>Lumen</span>
+      </a>
+      <div class="appbar-actions">
+        <button class="ib" data-act="cast" aria-label="Diffuser" data-i="cast"></button>
+        <button class="ib badge" data-act="notif" aria-label="Notifications" data-i="bell"><i>3</i></button>
+        <button class="ib" data-act="search" aria-label="Rechercher" data-i="search"></button>
+      </div>
+    </header>
+    <div class="chips" id="chips"></div>
+    <main id="feed" class="feed"></main>
+  </div>
+
+  <!-- Recherche -->
+  <div id="page-search" class="page">
+    <header class="appbar search-bar">
+      <button class="ib" data-act="back" aria-label="Retour" data-i="back"></button>
+      <form id="search-form"><input id="q" type="search" placeholder="Rechercher" autocomplete="off" enterkeyhint="search"></form>
+      <button class="ib round" aria-label="Recherche vocale" data-i="mic"></button>
+    </header>
+    <div id="search-body"></div>
+  </div>
+
+  <!-- Lecture -->
+  <div id="page-watch" class="page">
+    <div class="player" id="player"></div>
+    <div class="watch-scroll" id="watch"></div>
+  </div>
+
+  <!-- Clips verticaux -->
+  <div id="page-clips" class="page"><div id="clips" class="clips"></div></div>
+
+  <!-- Abonnements / Vous -->
+  <div id="page-subs" class="page"></div>
+  <div id="page-you" class="page"></div>
+
+  <nav class="bottom-nav" id="nav"></nav>
+  <div id="sheet" class="sheet" hidden><div class="sheet-panel"></div></div>
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
