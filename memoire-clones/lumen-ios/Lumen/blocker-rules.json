@@ -1,0 +1,14 @@
+[
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?doubleclick\\.net/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?googlesyndication\\.com/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?googleadservices\\.com/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?adservice\\.google\\." }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?amazon-adsystem\\.com/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?taboola\\.com/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?outbrain\\.com/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?criteo\\.(com|net)/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?adnxs\\.com/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": "^https?://([^/]+\\.)?scorecardresearch\\.com/" }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": ".*", "resource-type": ["popup"], "load-type": ["third-party"] }, "action": { "type": "block" } },
+  { "trigger": { "url-filter": ".*" }, "action": { "type": "css-display-none", "selector": ".ad, .ads, .advert, .ad-banner, [id^='google_ads'], [class*='sponsored-'], ins.adsbygoogle" } }
+]

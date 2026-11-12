@@ -1,0 +1,73 @@
+:root {
+  --bg: #0f1115; --panel: #171a21; --line: #262b36; --text: #e8eaf0; --muted: #8b93a7;
+  --accent: #ff7a59; --danger: #e5484d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+button, .button { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 14px; font: inherit; cursor: pointer; }
+button:hover, .button:hover { border-color: var(--accent); }
+button.danger { color: var(--danger); }
+button.link { background: none; border: 0; color: var(--accent); padding: 0; }
+button.icon { background: none; border: 0; font-size: 20px; padding: 6px 10px; }
+button.icon.big { font-size: 28px; }
+button.on { color: var(--accent); }
+input { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 12px; font: inherit; width: 100%; }
+
+.top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.top h1 { margin: 0; font-size: 22px; letter-spacing: .5px; color: var(--accent); }
+main { padding: 0 16px; max-width: 760px; margin: 0 auto; }
+h2 { font-size: 17px; margin: 16px 0 8px; }
+.view { display: none; }
+.view.active { display: block; }
+.search { display: flex; gap: 8px; margin: 8px 0; }
+.search button { flex: none; }
+.hint { color: var(--muted); font-size: 13px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+
+.tracks, .cards, .plain { list-style: none; padding: 0; margin: 0; }
+.tracks li { display: flex; align-items: center; gap: 12px; padding: 8px 0;
+  border-bottom: 1px solid var(--line); }
+.tracks li.playing .t-title { color: var(--accent); }
+.tracks img { width: 56px; height: 42px; object-fit: cover; border-radius: 6px; flex: none; }
+.t-text { flex: 1; min-width: 0; cursor: pointer; }
+.t-title, .t-artist { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-artist { color: var(--muted); font-size: 13px; }
+.t-actions { display: flex; flex: none; }
+.t-actions button { background: none; border: 0; padding: 6px 8px; font-size: 16px; }
+.cards li { padding: 14px; margin: 8px 0; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; cursor: pointer; display: flex; justify-content: space-between; }
+.plain li { margin: 6px 0; }
+.plain button { width: 100%; text-align: left; }
+
+.player { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom));
+  background: var(--panel); border-top: 1px solid var(--line); display: flex; gap: 12px;
+  padding: 10px 16px; align-items: center; }
+#yt-frame-wrap { width: 200px; height: 200px; flex: none; border-radius: 10px; overflow: hidden; background: #000; }
+#yt-frame-wrap iframe, #yt-frame { width: 200px; height: 200px; }
+.player-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+#now-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#now-artist { color: var(--muted); font-size: 13px; }
+#seek { padding: 0; accent-color: var(--accent); }
+.controls { display: flex; justify-content: center; }
+body.has-player main { padding-bottom: 240px; }
+
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--bg);
+  border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+.tabs button { flex: 1; border: 0; border-radius: 0; background: none; color: var(--muted); padding: 16px 0; }
+.tabs button.active { color: var(--accent); }
+
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+  border-radius: 14px; width: min(420px, calc(100% - 32px)); }
+dialog::backdrop { background: rgb(0 0 0 / .6); }
+dialog label { display: block; margin: 8px 0; }
+
+@media (max-width: 520px) {
+  .player { flex-direction: column; align-items: stretch; }
+  #yt-frame-wrap { align-self: center; }
+  body.has-player main { padding-bottom: 380px; }
+}
