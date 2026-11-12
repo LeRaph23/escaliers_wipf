@@ -207,3 +207,78 @@ body.dark-nav .bottom-nav { --bg: #0f0f0f; background: #0f0f0f; color: #f1f1f1; 
   .clip-shelf { grid-column: 1 / -1; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); padding: 0 0 24px; }
   .shelf-h { grid-column: 1 / -1; padding: 4px 0 12px; }
 }
+
+/* ---------- Polish & nouvelles fonctions ---------- */
+.appbar { backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px); background: color-mix(in srgb, var(--bg) 88%, transparent); }
+.chips { background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px); }
+.ap-title { flex: 1; font: 500 18px var(--font); padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatar { box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.thumb img { transition: transform .3s; }
+.video:active .thumb img { transform: scale(.985); }
+.w-sub .tag { color: var(--brand); }
+.w-ch-link { display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
+.pill.on, .pill .on { color: var(--brand); }
+.pill.on svg { color: var(--brand); }
+.desc .chapters { display: grid; gap: 6px; margin-top: 8px; max-height: 0; overflow: hidden; transition: max-height .25s; }
+.desc.open .chapters { max-height: 300px; }
+.desc .chapters button { display: flex; gap: 10px; align-items: center; text-align: left; font-size: 13px; padding: 6px 8px; border-radius: 8px; background: var(--bg); }
+.desc .chapters span { color: var(--brand); font-weight: 500; font-variant-numeric: tabular-nums; }
+.desc .more-l { font-weight: 500; font-size: 13px; display: inline-block; margin-top: 4px; }
+.desc.open .more-l { display: none; }
+.upnext-h { padding: 6px 12px 12px; font: 700 16px var(--font); display: flex; align-items: baseline; gap: 8px; }
+.upnext-h small { font: 400 12px var(--font); color: var(--t2); }
+.pbar::after { content: ""; position: absolute; top: 50%; left: var(--pp, 0%); width: 12px; height: 12px; border-radius: 50%; background: var(--brand); transform: translate(-50%, -50%) scale(0); transition: transform .15s; }
+.player.ui .pbar::after { transform: translate(-50%, -50%) scale(1); }
+.player.ui .pbar { height: 4px; }
+.sheet-panel { max-height: 82vh; overflow-y: auto; }
+.sh-title { display: flex; align-items: center; gap: 8px; padding: 4px 16px 10px; font: 700 18px var(--font); }
+.sh-title span { color: var(--t2); font-weight: 400; font-size: 14px; flex: 1; }
+.sh-note { color: var(--t2); font-size: 13px; padding: 0 16px 8px; margin: 0; }
+.sh-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; }
+.sh-row > span { display: flex; align-items: center; gap: 20px; font-size: 15px; }
+.sh-row svg { width: 24px; height: 24px; }
+.seg { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.seg button { height: 30px; padding: 0 10px; border-radius: 15px; background: var(--chip); font-size: 13px; font-weight: 500; }
+.seg button.on { background: var(--chip-on); color: var(--chip-on-t); }
+.c-form { display: flex; gap: 10px; align-items: center; padding: 4px 16px 12px; border-bottom: 1px solid var(--line); }
+.c-form .avatar { width: 28px; height: 28px; font-size: 12px; }
+.c-form input { flex: 1; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--t1); font: 14px var(--font); padding: 8px 0; outline: 0; }
+.c-form input:focus { border-color: var(--t1); }
+.c-send { width: 36px; height: 36px; display: grid; place-items: center; color: var(--brand); }
+.c-send svg { width: 20px; height: 20px; }
+.c-list { padding: 8px 0; }
+.c-item { display: flex; gap: 12px; padding: 8px 16px; }
+.c-item .avatar { width: 28px; height: 28px; font-size: 12px; }
+.c-meta { font-size: 12px; color: var(--t2); }
+.c-item p { margin: 2px 0 4px; font-size: 14px; }
+.c-acts { display: flex; gap: 14px; }
+.c-acts button { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2); }
+.c-acts button.on { color: var(--brand); }
+.c-acts svg { width: 16px; height: 16px; }
+.n-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 16px; cursor: pointer; position: relative; }
+.n-item.unread::before { content: ""; position: absolute; left: 5px; top: 24px; width: 5px; height: 5px; border-radius: 50%; background: var(--brand); }
+.n-item p { margin: 0; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.n-item small { color: var(--t2); font-size: 12px; }
+.n-item > div { flex: 1; }
+.n-item img { width: 86px; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover; flex: none; }
+.wt { padding: 4px 16px 16px; }
+.wt b { display: block; font-size: 28px; }
+.wt small { color: var(--t2); }
+.wt-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; height: 120px; margin-top: 16px; align-items: end; }
+.wt-bars div { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; }
+.wt-bars span { width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--brand); }
+.ch-banner { margin: 0 12px; border-radius: 12px; overflow: hidden; aspect-ratio: 4 / 1; }
+.ch-banner img { width: 100%; height: 100%; object-fit: cover; }
+.ch-head { display: flex; gap: 14px; align-items: center; padding: 14px 12px; }
+.ch-head h2 { margin: 0; font-size: 22px; }
+.ch-head small { color: var(--t2); font-size: 12px; }
+.sub-btn.wide { width: 100%; justify-content: center; }
+.ch-tabs { display: flex; gap: 22px; padding: 0 12px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.ch-tabs span { padding: 10px 0; font-weight: 500; color: var(--t2); }
+.ch-tabs span.on { color: var(--t1); box-shadow: inset 0 -2px var(--t1); }
+.list-meta { padding: 4px 12px 12px; color: var(--t2); font-size: 13px; }
+.clip-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.25); }
+.clip-prog span { display: block; height: 100%; width: 0; background: #fff; animation: cp 14s linear infinite; }
+@keyframes cp { to { width: 100% } }
+.clip::before { content: ""; position: absolute; inset: 0 0 auto; height: 90px; background: linear-gradient(rgba(0,0,0,.4), transparent); z-index: 1; pointer-events: none; }
+.vsub [data-ch], .vmeta [data-ch] { cursor: pointer; }

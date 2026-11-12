@@ -83,3 +83,17 @@ Méthode : Chromium headless émulant un iPhone 15 Pro, scénario Playwright scr
 ## 7. Contrainte légale observée : visibilité du lecteur
 
 Les CGU de l'API YouTube imposent un lecteur visible d'au moins 200×200 px. Cadence respecte cette contrainte : quand l'écran « À l'écoute » est fermé, une vignette vidéo flottante reste affichée. Résultat : l'expérience est visiblement *moins bonne* que celle d'un lecteur musical classique (lecture audio seule, écran verrouillé). **Hypothèse à vérifier :** les apps de ce segment qui offrent une écoute audio pure, sans vidéo visible, s'écartent probablement de ces CGU ou utilisent des API non documentées. L'écart d'expérience entre la version conforme et l'original est en soi un indicateur.
+
+## 8. Fonctions « intelligentes » et audit fonctionnel
+
+**Recommandation (les deux apps).** Moteur local et explicable : affinités artiste/genre (Cadence) ou chaîne/thème (Lumen) apprises à partir des écoutes pondérées par récence, des « J'aime », « Je n'aime pas », abonnements, sauts (< 30 % du titre) et « Pas intéressé ». Ces affinités pilotent l'accueil, les suggestions « À suivre », la lecture automatique en fin de file et les playlists automatiques de Cadence (« Vos titres en boucle », « Mix découverte », « Mix du jour », « Ajoutés récemment », « Jamais écoutés »).
+Un test comportemental (profil rap + électro sautée) a révélé un bug : un artiste systématiquement sauté apparaissait encore dans les favoris, parce que les affinités négatives n'étaient pas filtrées. Il est corrigé.
+
+**Ce que ça ne reproduit pas.** Les vraies plateformes recommandent par filtrage collaboratif sur des millions d'utilisateurs (les gens qui aiment X aiment aussi Y). C'est impossible sans base d'utilisateurs ni serveur. C'est la principale barrière **non copiable** identifiée : la donnée, pas le code.
+
+**Audit « boutons morts »** (`tests-audit-boutons.js`). Sur chaque écran, chaque élément interactif visible est cliqué un par un depuis un état propre, et on vérifie un effet observable (DOM, stockage, lecteur, URL, notification).
+- Cadence : 179 éléments, 3 sans effet. Tous correspondent au fait de retoucher l'onglet actif alors qu'on est déjà en haut (comportement natif normal).
+- Lumen : 210 éléments, 3 sans effet. Même cas, plus « reculer de 10 s » à 0:00.
+- 0 erreur JavaScript. L'audit a trouvé 2 vrais bugs, corrigés : la lecture/pause de Cadence inversait deux fois son état, et le bouton « Diffuser » de Lumen n'était pas câblé.
+
+**Synchronisation.** Aujourd'hui : stockage local et export/import JSON. Une synchronisation multi-appareils réelle exige un backend (authentification + base) ; voir la discussion dans le README.

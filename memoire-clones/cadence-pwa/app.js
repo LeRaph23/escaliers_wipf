@@ -42,6 +42,7 @@ const P = {
   album: '<rect x="3.5" y="3.5" width="17" height="17" rx="3" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="12" r="3.6" stroke="currentColor" stroke-width="1.8" fill="none"/>',
   song: '<path d="M17.5 3.5v11.3a2.8 2.8 0 1 1-1.8-2.6V6.5l-6.6 1.6v9a2.8 2.8 0 1 1-1.8-2.6V6.4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>',
   volLo: '<path d="M4 9.5h3l4.5-4v13l-4.5-4H4z" fill="currentColor"/>',
+  output: '<path d="M6 17H4.5A1.5 1.5 0 0 1 3 15.5v-10A1.5 1.5 0 0 1 4.5 4h15A1.5 1.5 0 0 1 21 5.5v10a1.5 1.5 0 0 1-1.5 1.5H18" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M12 13.5 17 20H7z" fill="currentColor"/>',
   volHi: '<path d="M3 9.5h3l4.5-4v13l-4.5-4H3z" fill="currentColor"/><path d="M14 9a4.2 4.2 0 0 1 0 6M16.8 6.4a8 8 0 0 1 0 11.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
 };
 const icon = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
@@ -49,26 +50,44 @@ const icon = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
 /* ---------- Pochettes générées (déterministes) ---------- */
 function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function rng(seed) { let s = seed || 1; return () => ((s = Math.imul(s ^ (s >>> 15), 2246822507) ^ Math.imul(s ^ (s >>> 13), 3266489909)) >>> 0) / 4294967296; }
-function palette(seed) {
-  const r = rng(hash(seed)); const h = Math.floor(r() * 360);
-  return [`hsl(${h} 70% 55%)`, `hsl(${(h + 40 + r() * 80) % 360} 75% 62%)`, `hsl(${(h + 180 + r() * 40) % 360} 55% 28%)`];
-}
+/* Palettes éditoriales (sélection manuelle) : rendu plus « pochette » que des teintes aléatoires */
+const PALETTES = [
+  ['#1d2b64', '#f8cdda', '#ff6f91'], ['#0f2027', '#2c5364', '#7ee8fa'], ['#3a1c71', '#d76d77', '#ffaf7b'],
+  ['#134e5e', '#71b280', '#e8f5c8'], ['#2b1055', '#7597de', '#f0c3ff'], ['#2f0743', '#41295a', '#ff9a8b'],
+  ['#1a1a1d', '#4e4e50', '#e0c3fc'], ['#4a1942', '#ff5f6d', '#ffc371'], ['#00416a', '#79a7c7', '#f9d423'],
+  ['#2c3e2d', '#2c7744', '#f2e6d0'], ['#240b36', '#c31432', '#ff8a5c'], ['#05117e', '#6a82fb', '#fc5c7d'],
+  ['#3d2c1e', '#c08552', '#f3e9dc'], ['#0d3b66', '#f4d35e', '#ee964b'], ['#1b0e2e', '#5f0f40', '#fb8b24'],
+];
+function palette(seed) { const p = PALETTES[hash('pal:' + seed + ':' + String(seed).length) % PALETTES.length]; return [p[2], p[1], p[0]]; }
 const artCache = new Map();
-function genArt(seed) {
-  if (artCache.has(seed)) return artCache.get(seed);
-  const r = rng(hash(seed + '#')); const [a, b, c] = palette(seed); const style = Math.floor(r() * 4);
-  let shapes = '';
-  if (style === 0) for (let i = 0; i < 5; i++) shapes += `<circle cx="${r() * 300}" cy="${r() * 300}" r="${40 + r() * 110}" fill="${[a, b, c][i % 3]}" opacity=".85"/>`;
-  else if (style === 1) for (let i = 0; i < 9; i++) shapes += `<rect x="${i * 34}" y="${60 + r() * 160}" width="26" height="300" rx="13" fill="${i % 2 ? b : c}" opacity=".9"/>`;
-  else if (style === 2) for (let i = 7; i > 0; i--) shapes += `<circle cx="150" cy="150" r="${i * 24}" fill="${[a, b, c][i % 3]}"/>`;
-  else for (let i = 0; i < 6; i++) shapes += `<path d="M0 ${40 + i * 45} Q150 ${r() * 300} 300 ${40 + i * 45 + r() * 30} V300 H0Z" fill="${[a, b, c][i % 3]}" opacity=".7"/>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="g" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${c}"/></linearGradient></defs><rect width="300" height="300" fill="url(#g)"/>${shapes}</svg>`;
+function genArt(seed, label) {
+  const key = seed + '|' + (label || ''); if (artCache.has(key)) return artCache.get(key);
+  const r = rng(hash(seed + '#')); const [hi, mid, dark] = palette(seed).map(String); const style = hash('style:' + seed) % 5;
+  const blob = (c, op) => `<circle cx="${(r() * 300).toFixed(0)}" cy="${(r() * 300).toFixed(0)}" r="${(70 + r() * 110).toFixed(0)}" fill="${c}" opacity="${op}"/>`;
+  let body = `<rect width="300" height="300" fill="${dark}"/><g filter="url(#b)">${blob(mid, .95)}${blob(hi, .85)}${blob(mid, .7)}${blob(hi, .5)}</g>`;
+  if (style === 1) { // anneaux fins
+    let s = ''; for (let i = 1; i < 14; i++) s += `<circle cx="150" cy="${150 + i * 2}" r="${i * 11}" fill="none" stroke="${hi}" stroke-opacity="${(1 - i / 15).toFixed(2)}" stroke-width="1.2"/>`;
+    body += s;
+  } else if (style === 2) { // monogramme
+    body += `<text x="22" y="262" font-family="Inter Display, Inter, sans-serif" font-weight="800" font-size="230" fill="${hi}" opacity=".9" letter-spacing="-12">${esc((label || seed).replace(/[^A-Za-zÀ-ÿ]/g, '').slice(0, 1).toUpperCase() || 'C')}</text>`;
+  } else if (style === 3) { // bandes obliques
+    let s = ''; for (let i = -4; i < 12; i++) s += `<rect x="${i * 34}" y="-50" width="12" height="420" fill="${i % 3 ? mid : hi}" opacity=".55" transform="rotate(28 150 150)"/>`;
+    body += s;
+  } else if (style === 4) { // soleil + horizon
+    body += `<circle cx="150" cy="168" r="78" fill="${hi}"/><rect y="168" width="300" height="132" fill="${dark}" opacity=".88"/>`;
+    for (let i = 0; i < 6; i++) body += `<rect x="${72 + i * 3}" y="${178 + i * 14}" width="${156 - i * 6}" height="${4 + i}" rx="2" fill="${hi}" opacity="${(.5 - i * .07).toFixed(2)}"/>`;
+  }
+  if (label) body += `<text x="20" y="38" font-family="Inter, sans-serif" font-weight="700" font-size="17" fill="#fff" opacity=".92" letter-spacing=".5">${esc(label.toUpperCase().slice(0, 22))}</text>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="26"/></filter>
+    <filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .09 0"/></filter>
+    <radialGradient id="v" cx=".5" cy=".45" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs>
+    ${body}<rect width="300" height="300" fill="url(#v)"/><rect width="300" height="300" filter="url(#n)"/></svg>`;
   const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  artCache.set(seed, url); return url;
+  artCache.set(key, url); return url;
 }
 /* <img> avec repli sur la pochette générée si la vignette YouTube ne charge pas */
 function artImg(t, key) {
-  const fb = genArt(key || t.album || t.id);
+  const fb = genArt(key || t.album || t.id, t.demo && t.album && hash(t.album) % 3 === 0 ? t.album.split(' — ')[1] : '');
   const src = t.demo || !t.thumb ? fb : t.thumb;
   return `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fb}'">`;
 }
@@ -77,32 +96,112 @@ function artImg(t, key) {
 const DEMO_ARTISTS = ['Nova Lune', 'Les Rives', 'Kaïs Merel', 'Orée', 'Midi Vingt', 'Sable Noir', 'Jade Okoro', 'Velours', 'Tamaris', 'Ilan Fosse', 'Poussière d\'Or', 'Mira Vale'];
 const DEMO_WORDS = ['Néons', 'Marée haute', 'Dernier métro', 'Lumière froide', 'Satellite', 'Après minuit', 'Vertige', 'Cœur pixel', 'Avenue', 'Rêve lucide', 'Tempête douce', 'Écho', 'Électrique', 'Horizon', 'Sous la pluie', 'Roulette', 'Ciel ouvert', 'Ombre portée', 'Fièvre', 'Kilomètres', 'Calme plat', 'Grand bleu', 'Silhouette', 'Mirage'];
 const GENRES = [
-  { id: 'charts', name: 'Classements', c: '#7a7a2a' }, { id: 'hits', name: 'Hits du moment', c: '#d8b93a' },
-  { id: 'rapfr', name: 'Rap francophone', c: '#6a8be8' }, { id: 'popfr', name: 'Pop française', c: '#e8678c' },
-  { id: 'pop', name: 'Pop', c: '#e35a7a' }, { id: 'rap', name: 'Rap', c: '#6b8ae6' },
-  { id: 'rnb', name: 'R&B', c: '#8e78dc' }, { id: 'dance', name: 'Dance', c: '#4fb46f' },
-  { id: 'electro', name: 'Électronique', c: '#4aae6c' }, { id: 'chill', name: 'Chill', c: '#e9414f' },
-  { id: 'live', name: 'Concerts', c: '#3a1414' }, { id: 'acoustic', name: 'Acoustique', c: '#ec7088' },
-  { id: '80s', name: 'Les années 80', c: '#e0b23a' }, { id: '90s', name: 'Les années 90', c: '#dcae3c' },
-  { id: 'jazz', name: 'Jazz', c: '#2f6f8f' }, { id: 'rock', name: 'Rock', c: '#555c66' },
+  { id: 'charts', name: 'Classements', c: '#7a7a2a', c2: '#4b4b16' }, { id: 'hits', name: 'Hits du moment', c: '#d8b93a', c2: '#c08a1e' },
+  { id: 'rapfr', name: 'Rap francophone', c: '#6a8be8', c2: '#4a63c9' }, { id: 'popfr', name: 'Pop française', c: '#e8678c', c2: '#c94570' },
+  { id: 'pop', name: 'Pop', c: '#e35a7a', c2: '#c23c63' }, { id: 'rap', name: 'Rap', c: '#6b8ae6', c2: '#4d66c4' },
+  { id: 'rnb', name: 'R&B', c: '#8e78dc', c2: '#6a54c0' }, { id: 'dance', name: 'Dance', c: '#4fb46f', c2: '#2f8f53' },
+  { id: 'electro', name: 'Électronique', c: '#4aae6c', c2: '#2c8a52' }, { id: 'chill', name: 'Chill', c: '#e9414f', c2: '#b82a3a' },
+  { id: 'live', name: 'Concerts', c: '#3a1414', c2: '#1a0909' }, { id: 'acoustic', name: 'Acoustique', c: '#ec7088', c2: '#cc5270' },
+  { id: '80s', name: 'Les années 80', c: '#e0b23a', c2: '#c0901e' }, { id: '90s', name: 'Les années 90', c: '#dcae3c', c2: '#b88a20' },
+  { id: 'jazz', name: 'Jazz', c: '#2f6f8f', c2: '#1d4a62' }, { id: 'rock', name: 'Rock', c: '#555c66', c2: '#383d45' },
 ];
+const GLYPHS = {
+  charts: '<path d="M4 20V13M9 20V8M14 20V11M19 20V4"/>', hits: '<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-9z"/>',
+  rapfr: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>', popfr: '<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>',
+  pop: '<path d="M12 4l1.8 4.6L18.5 10l-4.7 1.4L12 16l-1.8-4.6L5.5 10l4.7-1.4zM18 16l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>', rap: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/>',
+  rnb: '<path d="M12 20s-7-4.2-7-9.4A4 4 0 0 1 12 8a4 4 0 0 1 7 2.6C19 15.8 12 20 12 20z"/>', dance: '<circle cx="12" cy="13" r="7"/><path d="M5 13h14M12 6v14M7 8.5c3 2 7 2 10 0M7 17.5c3-2 7-2 10 0M12 3v3"/>',
+  electro: '<path d="M2 12h3l2-6 3 12 3-9 2 6 2-3h5"/>', chill: '<path d="M18 15A7 7 0 1 1 10 5a6 6 0 0 0 8 10z"/>',
+  live: '<path d="M4 20l5-12M20 20l-5-12M12 20V6M6 4l2 3M18 4l-2 3M12 2v2"/>', acoustic: '<circle cx="9" cy="15" r="5"/><path d="M12.5 11.5 20 4M18 3l3 3M9 15h.01"/>',
+  '80s': '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M7 18l1.5-3h7L17 18"/>', '90s': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5"/>',
+  jazz: '<path d="M17 3v12a3 3 0 1 1-2-2.8V6L9 7.5v9.5a3 3 0 1 1-2-2.8V5.5z"/>', rock: '<path d="M13 2 5 14h6l-1 8 8-12h-6z"/>',
+};
+/* Catalogue de démonstration : 12 artistes fictifs × 2 albums × 4 titres, chacun avec un genre principal. */
+const DEMO_GENRE_OF = { 'Nova Lune': 'popfr', 'Les Rives': 'acoustic', 'Kaïs Merel': 'rapfr', 'Orée': 'chill', 'Midi Vingt': 'electro', 'Sable Noir': 'rock',
+  'Jade Okoro': 'rnb', 'Velours': 'jazz', 'Tamaris': 'dance', 'Ilan Fosse': 'rap', "Poussière d'Or": '80s', 'Mira Vale': 'pop' };
 const DEMO = (() => {
-  const r = rng(42); const tracks = [];
-  DEMO_WORDS.forEach((w, i) => {
-    const artist = DEMO_ARTISTS[i % DEMO_ARTISTS.length];
-    tracks.push({ id: `demo-${i}`, demo: true, title: w, artist, album: `${artist} — ${DEMO_WORDS[(i * 7) % DEMO_WORDS.length]}`,
-      dur: 150 + Math.floor(r() * 110), genre: GENRES[(i * 5) % GENRES.length].id });
+  const r = rng(42); const tracks = []; let n = 0;
+  DEMO_ARTISTS.forEach((artist, ai) => {
+    for (let al = 0; al < 2; al++) {
+      const album = `${artist} — ${DEMO_WORDS[(ai * 5 + al * 11) % DEMO_WORDS.length]}`;
+      for (let k = 0; k < 4; k++) {
+        const w = DEMO_WORDS[(ai * 7 + al * 4 + k * 3) % DEMO_WORDS.length];
+        const title = k === 3 ? `${w} (version live)` : al && k === 1 ? `${w} II` : w;
+        tracks.push({ id: `demo-${n++}`, demo: true, title, artist, album, dur: 150 + Math.floor(r() * 110),
+          genre: DEMO_GENRE_OF[artist], pop: Math.round(r() * 100), year: 2026 - Math.floor(r() * (al ? 2 : 8)) });
+      }
+    }
   });
   return tracks;
 })();
-const demoFor = (genreId) => { const r = rng(hash(genreId)); return DEMO.slice().sort(() => r() - .5).slice(0, 12); };
+const GENRE_ALIAS = { charts: null, hits: null, live: 'live', '90s': '80s' };
+function demoFor(genreId) {
+  if (genreId === 'charts' || genreId === 'hits') return DEMO.slice().sort((a, b) => b.pop - a.pop).slice(0, 20);
+  if (genreId === 'live') return DEMO.filter((t) => t.title.includes('live'));
+  const g = GENRE_ALIAS[genreId] || genreId;
+  const own = DEMO.filter((t) => t.genre === g);
+  const r = rng(hash(genreId)); const rest = DEMO.filter((t) => t.genre !== g).sort(() => r() - .5);
+  return [...own, ...rest].slice(0, Math.max(12, own.length));
+}
+
+/* ---------- Recommandation (locale, explicable) ----------
+ * Affinités apprises à partir des écoutes (pondérées par récence), des titres sauvegardés et des sauts.
+ * score = 2·affinité artiste + 1,5·affinité genre + 0,4·popularité − pénalité « écouté récemment » − pénalité de sauts
+ */
+const Reco = {
+  stats(id) { return Store.data.plays[id] || { n: 0, skips: 0, last: 0 }; },
+  recordPlay(t) { const s = this.stats(t.id); s.n++; s.last = Date.now(); Store.data.plays[t.id] = s; Store.data.known[t.id] = t; Store.save(); },
+  recordSkip(t) { const s = this.stats(t.id); s.skips++; Store.data.plays[t.id] = s; Store.save(); },
+  profile() {
+    const art = {}, gen = {}; const now = Date.now(); const add = (o, k, v) => { if (k) o[k] = (o[k] || 0) + v; };
+    for (const [id, s] of Object.entries(Store.data.plays)) {
+      const t = Store.data.known[id]; if (!t) continue;
+      const decay = Math.exp(-(now - s.last) / (14 * 864e5)); const w = (s.n - 1.5 * s.skips) * (0.5 + decay);
+      add(art, t.artist, w); add(gen, t.genre, w);
+    }
+    Store.data.library.forEach((t) => { add(art, t.artist, 3); add(gen, t.genre, 2); });
+    const norm = (o) => { const m = Math.max(1, ...Object.values(o).map(Math.abs)); for (const k in o) o[k] /= m; return o; };
+    return { art: norm(art), gen: norm(gen) };
+  },
+  score(t, p = this.profile()) {
+    const s = this.stats(t.id); const hoursAgo = s.last ? (Date.now() - s.last) / 36e5 : 1e9;
+    return 2 * (p.art[t.artist] || 0) + 1.5 * (p.gen[t.genre] || 0) + 0.4 * ((t.pop ?? 50) / 100)
+      - (hoursAgo < 2 ? 1.5 : hoursAgo < 24 ? .5 : 0) - 0.6 * s.skips + this.jitter(t.id);
+  },
+  jitter(id) { return (hash(id + new Date().toDateString()) % 100) / 1000; }, // variation quotidienne stable
+  pool() { const m = new Map(); [...DEMO, ...Object.values(Store.data.known), ...Store.data.library].forEach((t) => m.set(t.id, t)); return [...m.values()]; },
+  rank(list, n) { const p = this.profile(); return list.map((t) => [this.score(t, p), t]).sort((a, b) => b[0] - a[0]).slice(0, n).map((x) => x[1]); },
+  diversify(list, maxPerArtist = 2) { const c = {}; return list.filter((t) => (c[t.artist] = (c[t.artist] || 0) + 1) <= maxPerArtist); },
+  forYou(n = 12) { const day = Date.now() - 864e5; return this.diversify(this.rank(this.pool().filter((t) => (this.stats(t.id).last || 0) < day), n * 3)).slice(0, n); },
+  discovery(n = 20) { return this.diversify(this.rank(this.pool().filter((t) => !this.stats(t.id).n && !Library.has(t.id)), n * 3)).slice(0, n); },
+  topGenres(k = 2) { return Object.entries(this.profile().gen).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, k).map((x) => x[0]); },
+  topArtists(k = 3) { return Object.entries(this.profile().art).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, k).map((x) => x[0]); },
+  /* Suite automatique : morceaux proches du titre en cours, jamais déjà dans la file */
+  continuation(seed, exclude, n = 6) {
+    const p = this.profile(); const inQ = new Set(exclude.map((t) => t.id));
+    return this.diversify(this.pool().filter((t) => !inQ.has(t.id))
+      .map((t) => [this.score(t, p) + (t.artist === seed?.artist ? 1.2 : 0) + (t.genre && t.genre === seed?.genre ? 1 : 0), t])
+      .sort((a, b) => b[0] - a[0]).map((x) => x[1]), 2).slice(0, n);
+  },
+  /* Playlists automatiques (recalculées à chaque affichage) */
+  smart() {
+    const plays = Store.data.plays; const known = Store.data.known; const out = [];
+    const top = Object.entries(plays).filter(([, s]) => s.n >= 2).sort((a, b) => b[1].n - a[1].n).map(([id]) => known[id]).filter(Boolean).slice(0, 25);
+    if (top.length >= 3) out.push({ id: 'smart:top', name: 'Vos titres en boucle', desc: 'Les morceaux que vous écoutez le plus', tracks: top });
+    out.push({ id: 'smart:disco', name: 'Mix découverte', desc: 'Des titres jamais écoutés, choisis selon vos goûts', tracks: this.discovery(20) });
+    this.topGenres(2).forEach((g, i) => { const G = GENRES.find((x) => x.id === g); if (G) out.push({ id: 'smart:genre:' + g, name: `Mix du jour ${i + 1}`, desc: `${G.name} et plus`, tracks: this.diversify(this.rank(this.pool().filter((t) => t.genre === g), 20).concat(this.forYou(8)), 3).slice(0, 20) }); });
+    if (Store.data.library.length) out.push({ id: 'smart:recent', name: 'Ajoutés récemment', desc: 'Les derniers ajouts à votre bibliothèque', tracks: Store.data.library.slice(0, 25) });
+    const forgot = Store.data.library.filter((t) => !this.stats(t.id).n);
+    if (forgot.length >= 3) out.push({ id: 'smart:forgot', name: 'Jamais écoutés', desc: 'Dans votre bibliothèque, pas encore joués', tracks: forgot });
+    return out;
+  },
+};
 
 /* ---------- Stockage ---------- */
 const Store = {
   key: 'cadence.v2',
-  data: { library: [], playlists: [], history: [], apiKey: '' },
+  data: { library: [], playlists: [], history: [], plays: {}, known: {}, apiKey: '', autoplay: true },
   load() { try { Object.assign(this.data, JSON.parse(localStorage.getItem(this.key)) || {}); } catch {} },
-  save() { try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch {} },
+  save() { this.data.updated = Date.now(); try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch {} },
 };
 
 /* ---------- Catalogue YouTube ---------- */
@@ -188,7 +287,7 @@ const Player = {
   playList(list, start = 0, shuffled = false) {
     if (!list.length) return;
     let q = list.slice(); if (shuffled) { q = shuffleArr(q); start = 0; }
-    this.shuffle = shuffled; this.queue = q; this.index = start; this.load();
+    this.shuffle = shuffled; this.queue = q; this.index = start; this.autoFrom = null; this.load();
   },
   playNext(t) { if (this.index < 0) return this.playList([t]); this.queue.splice(this.index + 1, 0, t); UI.toast('Lecture ensuite'); UI.syncPlayer(); },
   playLast(t) { if (this.index < 0) return this.playList([t]); this.queue.push(t); UI.toast('Ajouté à la file'); UI.syncPlayer(); },
@@ -198,14 +297,17 @@ const Player = {
     this.engine = t.demo ? SimEngine : YTEngine;
     t.demo ? SimEngine.load(t.dur) : YTEngine.load(t.id);
     this.playing = true;
-    const h = Store.data.history; Store.data.history = [t, ...h.filter((x) => x.id !== t.id)].slice(0, 20); Store.save();
+    const h = Store.data.history; Store.data.history = [t, ...h.filter((x) => x.id !== t.id)].slice(0, 20); Reco.recordPlay(t);
     Media.update(t); UI.syncPlayer(); UI.renderActive();
   },
-  toggle() { if (!this.current()) return; this.playing ? this.engine.pause() : this.engine.play(); this.playing = !this.playing; UI.syncPlayer(); },
+  toggle() { if (!this.current()) return; const play = !this.playing; play ? this.engine.play() : this.engine.pause(); this.playing = play; UI.syncPlayer(); },
   next(auto = false) {
     if (!this.queue.length) return;
     if (auto && this.repeat === 'one') { this.engine.seek(0); this.engine.play(); return; }
+    const cur = this.current(), d = this.engine?.duration() || cur?.dur || 0;
+    if (!auto && cur && d && this.engine.time() / d < .3) Reco.recordSkip(cur);
     let i = this.index + 1;
+    if (i >= this.queue.length && this.repeat === 'off' && Store.data.autoplay) { this.queue.push(...Reco.continuation(cur, this.queue)); this.autoFrom ??= i; }
     if (i >= this.queue.length) { if (this.repeat !== 'all') { this.playing = false; this.engine.pause(); this.engine.seek(0); UI.syncPlayer(); return; } i = 0; }
     this.index = i; this.load();
   },
@@ -272,33 +374,39 @@ const UI = {
     return `<button class="card" data-card="${i}"><div class="art">${artImg(t)}</div><div class="c1">${esc(t.title)}</div><div class="c2">${esc(t.artist)}</div></button>`;
   },
   plCard(pl) {
-    return `<button class="card" data-pl="${pl.id}"><div class="art">${artImg(pl.tracks[0] || { id: pl.id, demo: true }, pl.tracks[0] ? null : pl.id)}</div><div class="c1">${esc(pl.name)}</div><div class="c2">${pl.tracks.length} morceau${pl.tracks.length > 1 ? 'x' : ''}</div></button>`;
+    const cover = pl.id.startsWith('smart:') ? `<img src="${genArt(pl.id, pl.name)}" alt="">` : artImg(pl.tracks[0] || { id: pl.id, demo: true }, pl.tracks[0] ? null : pl.id);
+    return `<button class="card" data-pl="${pl.id}"><div class="art">${cover}</div><div class="c1">${esc(pl.name)}</div><div class="c2">${pl.tracks.length} morceau${pl.tracks.length > 1 ? 'x' : ''}</div></button>`;
   },
   tileDeco(g) {
-    const r = rng(hash(g.id)); let s = '';
-    for (let i = 0; i < 4; i++) s += `<circle cx="${110 + r() * 90}" cy="${r() * 110}" r="${18 + r() * 46}" fill="#fff" opacity="${(.06 + r() * .12).toFixed(2)}"/>`;
-    s += `<path d="M${120 + r() * 40} 112 C ${140 + r() * 30} ${30 + r() * 30}, ${170 + r() * 20} ${20 + r() * 40}, 200 ${10 + r() * 30} V112Z" fill="#000" opacity=".14"/>`;
-    return `<svg class="deco" viewBox="0 0 200 112" preserveAspectRatio="xMidYMid slice"><rect width="200" height="112" fill="${g.c}"/>${s}</svg>`;
+    const glyph = GLYPHS[g.id] || GLYPHS.pop;
+    return `<svg class="deco" viewBox="0 0 200 112" preserveAspectRatio="xMidYMid slice">
+      <defs><linearGradient id="tg-${g.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g.c}"/><stop offset="1" stop-color="${g.c2 || g.c}"/></linearGradient></defs>
+      <rect width="200" height="112" fill="url(#tg-${g.id})"/>
+      <g transform="translate(122 -10) rotate(-14 48 60) scale(3.9)" fill="none" stroke="#000" stroke-opacity=".18" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(.6 .9)">${glyph}</g></g>
+      <g transform="translate(122 -10) rotate(-14 48 60) scale(3.9)" fill="none" stroke="#fff" stroke-opacity=".92" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`;
   },
 
   /* -- vues -- */
   renderHome() {
-    const h = Store.data.history, pls = Store.data.playlists;
-    const picks = demoFor('picks').slice(0, 6), mix = demoFor('mix').slice(0, 8);
-    this.ctx.home = { history: h, picks, mix };
+    const h = Store.data.history, pls = Store.data.playlists, smart = Reco.smart();
+    const picks = Reco.forYou(6), fresh = Reco.discovery(10);
+    const tops = Reco.topArtists(3);
+    this.ctx.home = { history: h, picks, mix: fresh, smart };
+    const why = tops.length ? `Parce que vous écoutez ${esc(tops.slice(0, 2).join(' et '))}` : 'Écoutez quelques titres pour personnaliser cette page';
     $('#view-home').innerHTML = this.largeHead('Accueil') +
-      `<div class="section-h">Sélection pour vous</div>
-       <div class="shelf wide">${picks.slice(0, 3).map((t, i) => `<button class="hero" data-hero="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>Mix · ${esc(t.artist)}</small><b>${esc(t.title)}</b></div></button>`).join('')}</div>` +
-      (h.length ? `<div class="section-h">Écoutés récemment ${icon('chevR')}</div><div class="shelf" data-shelf="history">${h.map((t, i) => this.card(t, i)).join('')}</div>` : '') +
-      (pls.length ? `<div class="section-h">Vos playlists ${icon('chevR')}</div><div class="shelf">${pls.map((p) => this.plCard(p)).join('')}</div>` : '') +
-      `<div class="section-h">Nouveautés pour vous ${icon('chevR')}</div><div class="shelf" data-shelf="mix">${mix.map((t, i) => this.card(t, i)).join('')}</div>` +
-      `<p style="text-align:center"><span class="demo-pill">Contenus de démonstration fictifs</span></p>`;
+      `<div class="section-h">Sélection pour vous</div><p class="why">${why}</p>
+       <div class="shelf wide">${picks.slice(0, 4).map((t, i) => `<button class="hero" data-hero="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>Recommandé</small><b>${esc(t.title)}</b><span class="hero-sub">${esc(t.artist)}</span></div></button>`).join('')}</div>` +
+      `<button class="section-h" data-open="smart">Créés pour vous ${icon('chevR')}</button><div class="shelf">${smart.map((p) => this.plCard(p)).join('')}</div>` +
+      (h.length ? `<button class="section-h" data-open="history">Écoutés récemment ${icon('chevR')}</button><div class="shelf" data-shelf="history">${h.map((t, i) => this.card(t, i)).join('')}</div>` : '') +
+      (pls.length ? `<button class="section-h" data-nav="playlists">Vos playlists ${icon('chevR')}</button><div class="shelf">${pls.map((p) => this.plCard(p)).join('')}</div>` : '') +
+      `<button class="section-h" data-open="discovery">À découvrir ${icon('chevR')}</button><div class="shelf" data-shelf="mix">${fresh.map((t, i) => this.card(t, i)).join('')}</div>` +
+      `<p style="text-align:center"><span class="demo-pill">Catalogue de démonstration fictif</span></p>`;
   },
   renderNew() {
     const a = demoFor('new-a'), b = demoFor('new-b');
     this.ctx.new = { a, b };
     $('#view-new').innerHTML = this.largeHead('Nouveautés') +
-      `<div class="shelf wide">${a.slice(0, 3).map((t, i) => `<button class="hero" data-hero-new="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>Nouvelle sortie</small><b>${esc(t.title)}</b></div></button>`).join('')}</div>
+      `<div class="shelf wide">${a.slice(0, 3).map((t, i) => `<button class="hero" data-hero-new="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>Nouvelle sortie</small><b>${esc(t.title)}</b><span class="hero-sub">${esc(t.artist)}</span></div></button>`).join('')}</div>
        <div class="section-h">Derniers morceaux ${icon('chevR')}</div>${this.list(b.slice(0, 6))}
        <div class="section-h">À découvrir ${icon('chevR')}</div><div class="shelf" data-shelf="new">${a.map((t, i) => this.card(t, i)).join('')}</div>`;
   },
@@ -364,13 +472,19 @@ const UI = {
       const g = GENRES.find((x) => x.id === d.id); list = demoFor(g.id);
       html += this.largeHead(g.name, false) + `<div class="shelf wide">${list.slice(0, 3).map((t, i) => `<button class="hero" data-play-ctx="${i}"><div class="art">${artImg(t)}</div><div class="hero-txt"><small>${esc(g.name)}</small><b>${esc(t.title)}</b></div></button>`).join('')}</div><div class="section-h">Morceaux populaires</div>` + this.list(list);
     } else if (d.type === 'playlist') {
-      const pl = Store.data.playlists.find((p) => p.id === d.id); if (!pl) return this.pop();
+      const smart = d.id.startsWith('smart:');
+      const pl = smart ? Reco.smart().find((p) => p.id === d.id) : Store.data.playlists.find((p) => p.id === d.id); if (!pl) return this.pop();
       list = pl.tracks;
-      html += `<div class="pl-head"><div class="art">${artImg(pl.tracks[0] || { id: pl.id, demo: true }, pl.tracks[0] ? null : pl.id)}</div><h1>${esc(pl.name)}</h1><div class="sub">Ma playlist</div><div class="sub2">${list.length} morceau${list.length > 1 ? 'x' : ''} · ${fmt(list.reduce((s, t) => s + (t.dur || 0), 0))}</div></div>
+      html += `<div class="pl-head"><div class="art">${smart ? `<img src="${genArt(pl.id, pl.name)}" alt="">` : artImg(pl.tracks[0] || { id: pl.id, demo: true }, pl.tracks[0] ? null : pl.id)}</div><h1>${esc(pl.name)}</h1><div class="sub">${smart ? 'Cadence · mise à jour automatique' : 'Ma playlist'}</div>${smart ? `<p class="pl-desc">${esc(pl.desc)}</p>` : ''}<div class="sub2">${list.length} morceau${list.length > 1 ? 'x' : ''} · ${fmt(list.reduce((s, t) => s + (t.dur || 0), 0))}</div></div>
         <div class="pl-btns"><button data-act="pl-play">${icon('play')}Lecture</button><button data-act="pl-shuffle">${icon('shuffle')}Aléatoire</button></div>` +
         (list.length ? this.list(list) : '<div class="empty">Cette playlist est vide.</div>');
+    } else if (d.type === 'tracks') {
+      list = d.id === 'history' ? Store.data.history : Reco.discovery(30);
+      html += this.largeHead(d.id === 'history' ? 'Écoutés récemment' : 'À découvrir', false) + `<div class="pl-btns"><button data-act="ctx-play">${icon('play')}Lecture</button><button data-act="ctx-shuffle">${icon('shuffle')}Aléatoire</button></div>` + this.list(list);
+    } else if (d.type === 'smartlist') {
+      html += this.largeHead('Créés pour vous', false) + `<div class="grid2">${Reco.smart().map((p) => this.plCard(p)).join('')}</div>`;
     } else if (d.type === 'playlists') {
-      html += this.largeHead('Playlists', false) + `<div class="list"><div class="row new-pl" data-act="new-pl" role="button"><div class="art">${icon('plus')}</div><div class="rt"><div class="rtx r1">Nouvelle playlist…</div></div></div>${Store.data.playlists.map((p) => `<div class="row" data-pl="${p.id}" role="button"><div class="art">${artImg(p.tracks[0] || { id: p.id, demo: true }, p.tracks[0] ? null : p.id)}</div><div class="rt"><div class="rtx"><div class="r1">${esc(p.name)}</div><div class="r2">${p.tracks.length} morceau${p.tracks.length > 1 ? 'x' : ''}</div></div><span class="chev" style="width:18px;color:var(--label3)">${icon('chevR')}</span></div></div>`).join('')}</div>`;
+      html += this.largeHead('Playlists', false) + `<div class="list"><div class="row new-pl" data-act="new-pl" role="button"><div class="art">${icon('plus')}</div><div class="rt"><div class="rtx r1">Nouvelle playlist…</div></div></div>${[...Reco.smart(), ...Store.data.playlists].map((p) => `<div class="row" data-pl="${p.id}" role="button"><div class="art">${p.id.startsWith('smart:') ? `<img src="${genArt(p.id, p.name)}" alt="">` : artImg(p.tracks[0] || { id: p.id, demo: true }, p.tracks[0] ? null : p.id)}</div><div class="rt"><div class="rtx"><div class="r1">${esc(p.name)}</div><div class="r2">${p.tracks.length} morceau${p.tracks.length > 1 ? 'x' : ''}</div></div><span class="chev" style="width:18px;color:var(--label3)">${icon('chevR')}</span></div></div>`).join('')}</div>`;
     } else if (d.type === 'songs') {
       list = Store.data.library;
       html += this.largeHead('Morceaux', false) + (list.length ? `<div class="pl-btns"><button data-act="ctx-play">${icon('play')}Lecture</button><button data-act="ctx-shuffle">${icon('shuffle')}Aléatoire</button></div>` + this.list(list) : '<div class="empty">Aucun morceau.</div>');
@@ -395,7 +509,7 @@ const UI = {
     $$('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
   },
   go(view) {
-    if (this.view === view && !this.stack.length) { $('#scroller').scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (this.view === view && !this.stack.length) { $('#scroller').scrollTo({ top: 0, behavior: 'smooth' }); this.renderView(view); if (view === 'search') { this.query = ''; const q = $('#q'); if (q) { q.value = ''; q.focus(); } this.renderSearch(); } return; }
     this.view = view; this.stack = []; this.renderView(view); this.show(view); $('#scroller').scrollTop = 0; this.renderTabs(); this.compact(false);
   },
   renderView(v) { ({ home: () => this.renderHome(), new: () => this.renderNew(), library: () => this.renderLibrary(), search: () => this.renderSearch() })[v](); },
@@ -423,7 +537,7 @@ const UI = {
     $('#np-prev').innerHTML = icon('prev'); $('#np-next').innerHTML = icon('next');
     $('#np-shuffle').innerHTML = icon('shuffle'); $('#np-shuffle').classList.toggle('on', Player.shuffle);
     $('#np-repeat').innerHTML = icon(Player.repeat === 'one' ? 'repeat1' : 'repeat'); $('#np-repeat').classList.toggle('on', Player.repeat !== 'off');
-    $('#np-list').innerHTML = icon('queue');
+    $('#np-list').innerHTML = icon('queue'); $('#np-output').innerHTML = icon('output');
     $('#np-more').innerHTML = icon('more');
     $('.vol-ico.lo').innerHTML = icon('volLo'); $('.vol-ico.hi').innerHTML = icon('volHi');
     if (t) {
@@ -464,8 +578,8 @@ const UI = {
   renderQueue() {
     const up = Player.queue.slice(Player.index + 1);
     const t = Player.current();
-    $('#np-queue').innerHTML = `<div class="q-head"><div class="art">${artImg(t)}</div><div class="rtx"><div class="np-title">${esc(t.title)}</div><div class="q-artist">${esc(t.artist)}</div></div></div><h3>À suivre</h3><p>${Player.shuffle ? 'Lecture aléatoire' : 'Depuis votre sélection'}</p>` +
-      (up.length ? `<div class="list" style="margin:0">${up.map((t, i) => this.row(t, i)).join('')}</div>` : '<p>Rien à suivre.</p>');
+    $('#np-queue').innerHTML = `<div class="q-head"><div class="art">${artImg(t)}</div><div class="rtx"><div class="np-title">${esc(t.title)}</div><div class="q-artist">${esc(t.artist)}</div></div></div><div class="q-bar"><div><h3>À suivre</h3><p>${Player.shuffle ? 'Lecture aléatoire' : 'Depuis votre sélection'}</p></div><button class="q-auto${Store.data.autoplay ? ' on' : ''}" data-act="autoplay" aria-pressed="${Store.data.autoplay}">∞ Lecture auto</button></div>` +
+      (up.length ? `<div class="list" style="margin:0">${up.map((t, i) => this.row(t, i, Player.autoFrom != null && Player.index + 1 + i >= Player.autoFrom ? { sub: 'Lecture auto · ' + esc(t.artist) } : {})).join('')}</div>` : `<p>${Store.data.autoplay ? 'Des titres similaires seront ajoutés automatiquement.' : 'Rien à suivre.'}</p>`);
     this.ctx.queue = up;
   },
 
@@ -481,7 +595,7 @@ const UI = {
     this.sheet(`<div class="sheet-head"><div class="art">${artImg(t)}</div><div><div class="r1">${esc(t.title)}</div><div class="r2">${esc(t.artist)}</div></div></div>
       <div class="menu"><button data-m="lib">${liked ? 'Retirer de la bibliothèque' : 'Ajouter à la bibliothèque'}${icon(liked ? 'trash' : 'plus')}</button><button data-m="pl">Ajouter à une playlist…${icon('listAdd')}</button></div>
       <div class="menu"><button data-m="next">Lire ensuite${icon('playNext')}</button><button data-m="last">Lire en dernier${icon('playLast')}</button></div>`
-      + (this.stack.at(-1)?.type === 'playlist' ? `<div class="menu"><button data-m="rm" class="danger">Supprimer de la playlist${icon('trash')}</button></div>` : ''), (p) => {
+      + (this.stack.at(-1)?.type === 'playlist' && !this.stack.at(-1).id.startsWith('smart:') ? `<div class="menu"><button data-m="rm" class="danger">Supprimer de la playlist${icon('trash')}</button></div>` : ''), (p) => {
       p.onclick = (e) => {
         const m = e.target.closest('[data-m]')?.dataset.m; if (!m) return;
         if (m === 'pl') return this.playlistPicker(t);
@@ -533,6 +647,7 @@ const UI = {
       const hero = el.closest('[data-hero]'); if (hero) return Player.playList(this.ctx.home.picks, +hero.dataset.hero);
       const heroN = el.closest('[data-hero-new]'); if (heroN) return Player.playList(this.ctx.new.a, +heroN.dataset.heroNew);
       const pc = el.closest('[data-play-ctx]'); if (pc) return Player.playList(this.ctx.detail, +pc.dataset.playCtx);
+      const op = el.closest('[data-open]'); if (op) return this.push(op.dataset.open === 'smart' ? { type: 'smartlist' } : { type: 'tracks', id: op.dataset.open });
       const g = el.closest('[data-genre]'); if (g) return this.push({ type: 'genre', id: g.dataset.genre });
       const pl = el.closest('[data-pl]'); if (pl) return this.push({ type: 'playlist', id: pl.dataset.pl });
       const nav = el.closest('[data-nav]'); if (nav) return this.push({ type: nav.dataset.nav });
@@ -541,6 +656,7 @@ const UI = {
       const act = el.closest('[data-act]')?.dataset.act;
       if (act === 'settings') { $('#api-key').value = Store.data.apiKey; return $('#settings').showModal(); }
       if (act === 'back') return this.pop();
+      if (act === 'autoplay') { Store.data.autoplay = !Store.data.autoplay; Store.save(); this.toast(Store.data.autoplay ? 'Lecture automatique activée' : 'Lecture automatique désactivée'); return this.renderQueue(); }
       if (act === 'pl-play' || act === 'ctx-play') return Player.playList(this.ctx.detail);
       if (act === 'pl-shuffle' || act === 'ctx-shuffle') return Player.playList(this.ctx.detail, 0, true);
       if (act === 'new-pl') { const n = prompt('Nom de la playlist'); if (n) { const p = Library.createPlaylist(n.trim()); this.push({ type: 'playlist', id: p.id }); } return; }
@@ -561,6 +677,7 @@ const UI = {
     $('#np-play').onclick = () => Player.toggle(); $('#np-next').onclick = () => Player.next(); $('#np-prev').onclick = () => Player.prev();
     $('#np-shuffle').onclick = () => Player.toggleShuffle(); $('#np-repeat').onclick = () => Player.cycleRepeat();
     $('#np-list').onclick = () => this.toggleQueue();
+    $('#np-output').onclick = () => this.toast('Sortie audio : cet appareil');
     $('#np-like').onclick = () => Player.current() && Library.toggle(Player.current());
     $('#np-more').onclick = () => Player.current() && this.trackMenu(Player.current());
     const seek = $('#seek');
@@ -593,4 +710,4 @@ UI.syncPlayer();
 Media.init();
 Player.init();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
-window.Cadence = { Store, Catalog, Player, Library, UI, DEMO };
+window.Cadence = { Store, Catalog, Player, Library, UI, DEMO, Reco };
