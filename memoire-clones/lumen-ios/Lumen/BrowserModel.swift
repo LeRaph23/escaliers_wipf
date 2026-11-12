@@ -23,6 +23,8 @@ final class BrowserModel: NSObject, ObservableObject, WKNavigationDelegate {
     private var observers: [NSKeyValueObservation] = []
 
     static let defaultSites: [Bookmark] = [
+        // Connexion, historique, recommandations : fournis par le site lui-même, pas par l'app.
+        Bookmark(title: "YouTube", url: URL(string: "https://m.youtube.com")!),
         Bookmark(title: "Vimeo", url: URL(string: "https://vimeo.com")!),
         Bookmark(title: "Dailymotion", url: URL(string: "https://www.dailymotion.com")!),
         Bookmark(title: "Arte", url: URL(string: "https://www.arte.tv")!),

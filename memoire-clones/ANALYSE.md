@@ -97,3 +97,19 @@ Un test comportemental (profil rap + électro sautée) a révélé un bug : un a
 - 0 erreur JavaScript. L'audit a trouvé 2 vrais bugs, corrigés : la lecture/pause de Cadence inversait deux fois son état, et le bouton « Diffuser » de Lumen n'était pas câblé.
 
 **Synchronisation.** Aujourd'hui : stockage local et export/import JSON. Une synchronisation multi-appareils réelle exige un backend (authentification + base) ; voir la discussion dans le README.
+
+## 9. Historique et recommandations : empruntés, pas copiés
+
+**Constat.** L'app cible A (« navigateur vidéo ») offre connexion, historique et recommandations YouTube. Elle ne les *réimplémente* pas : c'est un navigateur (`WKWebView`) qui affiche le site m.youtube.com, sur lequel l'utilisateur se connecte. Historique et recommandations sont calculés et servis par YouTube. Lumen iOS reproduit exactement ce mécanisme (cookies persistants, `websiteDataStore = .default()`).
+
+À l'inverse, une app qui passe par l'API officielle (Lumen web) **ne peut pas** obtenir ces données. L'historique et « À regarder plus tard » sont retirés de l'API YouTube Data v3 depuis 2016, et le fil de recommandations n'est exposé par aucune API publique. Les seules voies restantes sont :
+- l'export manuel Google Takeout (licite, mais instantané figé, pas une synchro) ;
+- l'API interne non documentée avec les cookies de session (contraire aux CGU, et techniquement identique à un vol de session).
+
+**Conclusion pour le mémoire.** Les fonctions les plus « difficiles » (personnalisation, recommandations) ne sont pas reproduites : elles sont **empruntées en encapsulant le service d'origine**. La barrière non copiable reste la donnée d'usage, détenue par la plateforme.
+
+**Risque de sécurité associé (catégorie « app-navigateur »).** L'app hôte contrôle la vue web, donc elle peut injecter du JavaScript dans toute page, y compris la page de connexion Google, et lire identifiants et cookies de session. Une seule ligne sépare un script de confort (lecture en arrière-plan) d'un enregistreur de frappe. Le prototype Lumen injectait initialement son script sur *toutes* les pages. Il exclut désormais explicitement les domaines d'authentification (Google, Apple, Microsoft). L'utilisateur, lui, n'a **aucun moyen de vérifier** ce comportement dans une app installée depuis un store. C'est l'argument central :
+- Google bloque la connexion depuis les vues web intégrées de certaines apps ;
+- les recommandations à porter sont : connexion via `ASWebAuthenticationSession` / navigateur système, audit des apps-navigateurs en store, sensibilisation des utilisateurs.
+
+**Non vérifié.** Je n'ai pas testé si la connexion Google aboutit aujourd'hui dans un `WKWebView` standard : Google peut la refuser selon l'agent utilisateur. Je n'ai mis en œuvre aucun contournement de ce contrôle, car il s'agit précisément d'une protection anti-interception.
