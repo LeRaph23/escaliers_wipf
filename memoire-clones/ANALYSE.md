@@ -113,3 +113,17 @@ Un test comportemental (profil rap + électro sautée) a révélé un bug : un a
 - les recommandations à porter sont : connexion via `ASWebAuthenticationSession` / navigateur système, audit des apps-navigateurs en store, sensibilisation des utilisateurs.
 
 **Non vérifié.** Je n'ai pas testé si la connexion Google aboutit aujourd'hui dans un `WKWebView` standard : Google peut la refuser selon l'agent utilisateur. Je n'ai mis en œuvre aucun contournement de ce contrôle, car il s'agit précisément d'une protection anti-interception.
+
+## 10. « Synchroniser l'historique de la télé » : ce qui est possible, et ce qui ne l'est pas
+
+Demande fréquente : faire apparaître dans le clone les vidéos regardées ailleurs (télé, autre appareil). Trois voies, une seule à écarter :
+
+| Voie | Statut | Mécanisme |
+|---|---|---|
+| **Navigateur affichant youtube.com** (Lumen iOS / YouPlay) | Licite | Ce n'est pas une synchro : l'utilisateur est connecté à YouTube, et le site lui ressert son historique et ses recommandations, télé comprise. |
+| **Import Google Takeout** (Lumen web) | Licite | Export officiel des données utilisateur (`watch-history.json`), importé dans l'app. Différé et manuel, pas temps réel. |
+| **API interne InnerTube + cookies de session** | À écarter | Seule voie « temps réel », mais contraire aux CGU YouTube et techniquement identique à un détournement de session. Non implémentée. |
+
+**Conclusion centrale du mémoire.** Il n'existe, par conception, **aucune API officielle** donnant l'historique de visionnage YouTube en continu : Google l'a supprimée en 2016. Autrement dit, toute app tierce qui affiche vraiment l'historique « télé » en temps réel soit encapsule le site d'origine (et n'a donc rien copié de la plateforme), soit opère hors des règles avec la session de l'utilisateur. La barrière n'est pas technique côté interface : elle est **contractuelle et côté données**, détenue par la plateforme. C'est précisément ce qu'une étude destinée à l'ANSSI/SGDSN doit documenter : la facilité de copie de l'enveloppe, l'impossibilité de copie légale de la donnée d'usage, et le risque que des clones franchissent cette ligne en détournant la session.
+
+L'import Takeout de Lumen web est testé par `tests-takeout.js` (jeu d'essai `tests-takeout-sample.json`).

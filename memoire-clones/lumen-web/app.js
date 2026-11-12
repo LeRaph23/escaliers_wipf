@@ -243,7 +243,7 @@ const UI = {
       ${Google.signedIn && Google.playlists.length ? `<div class="sec-h">Vos playlists YouTube</div><div class="hscroll">${Google.playlists.map((p) => `<div class="mini-v" data-ypl="${esc(p.id)}"><div class="thumb">${p.thumb ? `<img src="${esc(p.thumb)}" alt="" onerror="this.onerror=null;this.src='${thumb(p.id, 320, 180, p.name)}'">` : `<img src="${thumb(p.id, 320, 180, p.name)}" alt="">`}<span class="dur">${p.count} vidéos</span></div><div class="vtitle">${esc(p.name)}</div></div>`).join('')}</div>` : ''}
       <div class="sec-h">Historique <button data-list="history">Tout afficher</button></div>${hist.length ? `<div class="hscroll">${hist.map(mini).join('')}</div>` : '<div class="vsub" style="padding:0 12px">Les vidéos regardées apparaîtront ici.</div>'}
       <div class="sec-h">À regarder plus tard <button data-list="later">Tout afficher</button></div>${St.later.length ? `<div class="hscroll">${St.later.map(byId).filter(Boolean).map(mini).join('')}</div>` : '<div class="vsub" style="padding:0 12px">Rien pour l\'instant.</div>'}
-      <div class="menu-list" style="margin-top:12px;border-top:1px solid var(--line)"><button data-list="liked">${ic('likeF')}Vidéos « J'aime » (${St.liked.length})</button><button data-list="downloads">${ic('download')}Téléchargements (${St.downloads.length})</button><button data-act="adblock">${ic('shield')}Bloqueur de publicités : ${St.adblock === false ? 'désactivé' : 'actif'}</button><button data-act="watchtime">${ic('clock')}Temps de visionnage</button><button data-act="settings">${ic('gear')}Paramètres de lecture</button></div>`;
+      <div class="menu-list" style="margin-top:12px;border-top:1px solid var(--line)"><button data-list="liked">${ic('likeF')}Vidéos « J'aime » (${St.liked.length})</button><button data-list="downloads">${ic('download')}Téléchargements (${St.downloads.length})</button><button data-act="adblock">${ic('shield')}Bloqueur de publicités : ${St.adblock === false ? 'désactivé' : 'actif'}</button><button data-act="watchtime">${ic('clock')}Temps de visionnage</button><button data-act="settings">${ic('gear')}Paramètres de lecture</button><button data-act="takeout">${ic('upload')}Importer l'historique YouTube (Takeout)</button></div>`;
   },
   sheet(v) {
     const inLater = St.later.includes(v.id), dl = St.downloads.includes(v.id);
@@ -297,6 +297,34 @@ const Reco = {
   why(v) { const p = this.profile(); if (St.subs.includes(v.channel)) return 'De vos abonnements'; if ((p.cat[v.cat] || 0) > .3) return `Parce que vous regardez : ${v.cat}`; return ''; },
 };
 function fmtWatched(ms) { const m = Math.floor((Date.now() - ms) / 60000); if (m < 1) return "à l'instant"; if (m < 60) return `il y a ${m} min`; const h = Math.floor(m / 60); if (h < 24) return `il y a ${h} h`; const d = Math.floor(h / 24); return d < 7 ? `il y a ${d} j` : `le ${new Date(ms).toLocaleDateString('fr-FR')}`; }
+/* Import de l'historique de visionnage YouTube depuis un export Google Takeout.
+ * Accepte le JSON (watch-history.json) ; on ne garde que les entrées de type « vidéo regardée ». */
+function importTakeout(text) {
+  let data; try { data = JSON.parse(text); } catch { throw new Error('Fichier illisible. Choisissez watch-history.json (format JSON) depuis votre export Takeout.'); }
+  if (!Array.isArray(data)) throw new Error('Format inattendu. Dans Takeout, choisissez « Historique », export JSON.');
+  let added = 0, seen = new Set(JSON.parse(localStorage.getItem('lumen.v1') || '{}').history || []);
+  const entries = [];
+  for (const it of data) {
+    const url = it.titleUrl || ''; const m = url.match(/[?&]v=([\w-]{11})/); if (!m) continue; // ignore recherches, pubs, vidéos supprimées
+    const vid = 'yt:' + m[1];
+    const title = (it.title || '').replace(/^(Watched|Vous avez regardé|Regardé|Visionné)\s+/i, '').trim() || 'Vidéo YouTube';
+    const channel = (it.subtitles && it.subtitles[0] && it.subtitles[0].name) || 'YouTube';
+    const at = it.time ? Date.parse(it.time) : Date.now();
+    entries.push({ vid, ytid: m[1], title, channel, at });
+  }
+  entries.sort((a, b) => b.at - a.at); // plus récent d'abord
+  const order = [];
+  for (const e of entries) {
+    if (!St.vcache[e.vid]) St.vcache[e.vid] = { id: e.vid, yt: e.ytid, title: e.title, channel: e.channel, real: true, cat: 'YouTube', secs: 0, dur: '', views: 0, likes: 0, comments: 0, ago: Math.floor((Date.now() - e.at) / 864e5), thumbUrl: `https://i.ytimg.com/vi/${e.ytid}/hqdefault.jpg` };
+    if (!St.watched[e.vid]) { St.watched[e.vid] = { at: e.at, t: 0, secs: 0, count: 1, source: 'youtube' }; if (!seen.has(e.vid)) added++; }
+    else St.watched[e.vid].at = Math.max(St.watched[e.vid].at, e.at);
+    if (!order.includes(e.vid)) order.push(e.vid);
+  }
+  // fusionne, en conservant l'ordre par date (import + historique Lumen existant)
+  const merged = [...new Set([...order, ...St.history])].sort((a, b) => (St.watched[b]?.at || 0) - (St.watched[a]?.at || 0));
+  St.history = merged.slice(0, 1000); save();
+  return { added, total: entries.length };
+}
 const byId = (id) => VIDEOS.find((v) => v.id === id) || CLIPS.find((v) => v.id === id) || Google.videos.get(id) || St.vcache[id];
 const cacheVid = (v) => { if (v && (v.real || v.yt)) { St.vcache[v.id] = { id: v.id, yt: v.yt, title: v.title, channel: v.channel, channelId: v.channelId, views: v.views, likes: v.likes, comments: v.comments, ago: v.ago, secs: v.secs, dur: v.dur, cat: v.cat, subs: v.subs, real: true, thumbUrl: v.thumbUrl }; } };
 const watchPct = (id) => { const w = St.watched[id]; return w && w.secs ? Math.min(100, Math.round((w.t / w.secs) * 100)) : 0; };
@@ -526,6 +554,7 @@ document.addEventListener('click', (e) => {
   if (act === 'explore') return Sheets.explore();
   if (act === 'watchtime') return Sheets.watchTime();
   if (act === 'clearhist') { if (!confirm('Effacer tout l\'historique de visionnage ?')) return; St.history = []; St.watched = {}; save(); toast('Historique effacé'); return Pages.list('history'); }
+  if (act === 'takeout') { $('#takeout-file').click(); return; }
   if (act === 'gsignin') return Google.signIn();
   if (act === 'gsignout') return Google.signOut();
   if (act === 'adblock') { St.adblock = St.adblock === false; save(); toast(`Bloqueur de publicités ${St.adblock ? 'activé' : 'désactivé'}`); return UI.you(); }
@@ -545,9 +574,16 @@ window.addEventListener('scroll', () => {
 
 /* ---------- Démarrage ---------- */
 document.querySelectorAll('[data-i]').forEach((b) => b.insertAdjacentHTML('afterbegin', ic(b.dataset.i)));
+$('#takeout-file').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try { const { added, total } = importTakeout(await f.text());
+    toast(added ? `${added} vidéo${added > 1 ? 's' : ''} importée${added > 1 ? 's' : ''} (${total} au total dans l'export)` : 'Aucune nouvelle vidéo à importer');
+    if (UI.page === 'you') UI.you(); if (UI.page === 'home') UI.home();
+  } catch (err) { toast(err.message); }
+});
 if (St.notifSeen) document.querySelector('.badge i')?.remove();
 if (new URLSearchParams(location.search).get('t')) setTimeout(() => { Watch.t = +new URLSearchParams(location.search).get('t'); Watch.syncBar(); }, 100);
 const start = new URLSearchParams(location.search);
 UI.go(start.get('p') || 'home');
 if (start.get('v')) Watch.open(VIDEOS.find((v) => v.id === start.get('v')) || VIDEOS[0]);
-window.Lumen = { UI, Watch, VIDEOS, St, Pages, Reco, Sheets, Google, byId, save };
+window.Lumen = { UI, Watch, VIDEOS, St, Pages, Reco, Sheets, Google, byId, save, importTakeout };

@@ -22,7 +22,11 @@ Mise en place (une fois, ~10 min) :
 
 Ce que ça récupère : profil, abonnements, vidéos « J'aime », playlists, et les vidéos d'une chaîne. Lecture via l'intégration officielle `youtube-nocookie.com/embed`. Test automatisé (Google simulé) : `tests-google-oauth.js`.
 
-## Historique (Lumen)
+## Import Takeout + Historique (Lumen)
+
+**Importer son historique YouTube** (y compris les vidéos vues sur la télé) : Google Takeout, puis « Historique YouTube », export **JSON**, puis dans Lumen *Vous, Importer l'historique YouTube*. Import différé (pas temps réel) mais légal. Pour du « temps réel » façon YouPlay, c'est le wrapper iOS (`lumen-ios/`) qui affiche youtube.com directement.
+
+### Historique de lecture
 
 Historique de visionnage **continu** de ce qui est lu dans Lumen (vidéos de démo et vraies vidéos YouTube via l'embed officiel) : mis à jour pendant la lecture, persistant (localStorage), avec reprise à la position exacte, barre de progression, horodatage « Regardé il y a X », temps total et effacement. Nourrit les recommandations. Test : `tests-historique.js`.
 
