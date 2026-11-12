@@ -139,7 +139,7 @@ const fmtAgo = (d) => d < 1 ? 'il y a quelques heures' : d < 7 ? `il y a ${d} jo
 
 /* ---------- État ---------- */
 const St = (() => { let d = {}; try { d = JSON.parse(localStorage.getItem('lumen.v1')) || {}; } catch {}
-  return Object.assign({ subs: [], liked: [], disliked: [], later: [], history: [], downloads: [], hidden: [], hiddenCh: [], comments: {}, cliked: [], watchByDay: {}, speed: 1, quality: 'Auto', autoplay: true, notifSeen: false, recent: ['levain', 'islande vélo'] }, d); })();
+  return Object.assign({ subs: [], liked: [], disliked: [], later: [], history: [], downloads: [], hidden: [], hiddenCh: [], comments: {}, cliked: [], watchByDay: {}, watched: {}, vcache: {}, speed: 1, quality: 'Auto', autoplay: true, notifSeen: false, recent: ['levain', 'islande vélo'] }, d); })();
 const save = () => { try { localStorage.setItem('lumen.v1', JSON.stringify(St)); } catch {} };
 
 /* ---------- Rendu ---------- */
@@ -169,13 +169,14 @@ const UI = {
   },
   card(v) {
     return `<article class="video" data-v="${v.id}">
-      <div class="thumb">${vimg(v)}<span class="dur${v.live ? ' live' : ''}">${v.dur}</span>${v.watched ? `<span class="progress" style="width:${v.watched}%"></span>` : ''}</div>
+      <div class="thumb">${vimg(v)}<span class="dur${v.live ? ' live' : ''}">${v.dur}</span>${watchPct(v.id) ? `<span class="progress" style="width:${watchPct(v.id)}%"></span>` : ''}</div>
       <div class="vmeta"><span data-ch="${esc(v.channel)}">${avatar(v.channel)}</span><div class="vtext"><div class="vtitle">${esc(v.title)}</div>
       <div class="vsub"><span data-ch="${esc(v.channel)}">${esc(v.channel)}</span> · ${v.live ? `${fmtN(Math.floor(v.views / 50))} spectateurs` : `${fmtN(v.views)} vues · ${fmtAgo(v.ago)}`}</div></div>
       <button class="kebab" data-menu="${v.id}" aria-label="Plus d'actions">${ic('more')}</button></div></article>`;
   },
   resultRow(v, kind) {
-    return `<div class="result" data-v="${v.id}"><div class="thumb">${vimg(v)}<span class="dur${v.live ? ' live' : ''}">${v.dur}</span></div><div class="vtext"><div class="vtitle">${esc(v.title)}</div><div class="vsub">${esc(v.channel)}<br>${fmtN(v.views)} vues · ${fmtAgo(v.ago)}</div></div>${kind ? `<button class="kebab" data-rm="${kind}:${v.id}" aria-label="Retirer">${ic('close')}</button>` : `<button class="kebab" data-menu="${v.id}" aria-label="Plus d'actions">${ic('more')}</button>`}</div>`;
+    const wk = St.watched[v.id];
+    return `<div class="result" data-v="${v.id}"><div class="thumb">${vimg(v)}<span class="dur${v.live ? ' live' : ''}">${v.dur}</span>${watchPct(v.id) ? `<span class="progress" style="width:${watchPct(v.id)}%"></span>` : ''}</div><div class="vtext"><div class="vtitle">${esc(v.title)}</div><div class="vsub">${esc(v.channel)}<br>${kind === 'history' && wk ? `Regardé ${fmtWatched(wk.at)}${watchPct(v.id) && watchPct(v.id) < 95 ? ` · ${watchPct(v.id)} %` : ''}` : `${fmtN(v.views)} vues · ${fmtAgo(v.ago)}`}</div></div>${kind ? `<button class="kebab" data-rm="${kind}:${v.id}" aria-label="Retirer">${ic('close')}</button>` : `<button class="kebab" data-menu="${v.id}" aria-label="Plus d'actions">${ic('more')}</button>`}</div>`;
   },
   clipShelf() {
     return `<div class="shelf-h">${ic('clipsF')}Clips</div><div class="clip-shelf">${CLIPS.slice(0, 4).map((c) =>
@@ -233,7 +234,7 @@ const UI = {
     $('#page-you').innerHTML = `<header class="appbar"><span></span><div class="appbar-actions"><button class="ib" data-act="cast" aria-label="Diffuser">${ic('cast')}</button><button class="ib" data-act="search">${ic('search')}</button><button class="ib" data-act="settings">${ic('gear')}</button></div></header>
       ${Google.signedIn && Google.user ? `<div class="you-head">${avatarImg(Google.user.picture, Google.user.name || 'G', 'xl')}<div><h2>${esc(Google.user.name || '')}</h2><small>${esc(Google.user.email || '')} · Compte Google connecté</small></div></div>
         <div class="g-bar"><span class="g-ok">${ic('shield')}Accès en lecture seule · expire dans ${Math.max(1, Math.round((Google.expires - Date.now()) / 60000))} min</span><button class="g-out" data-act="gsignout">Se déconnecter</button></div>`
-      : `<div class="you-head">${avatar('Invité', 'xl')}<div><h2>Invité</h2><small>${St.history.length} vidéos regardées sur cet appareil</small></div></div>
+      : `<div class="you-head">${avatar('Invité', 'xl')}<div><h2>Invité</h2><small>${St.history.length} vidéos · ${Math.round(Object.values(St.watched).reduce((a, w) => a + (w.t || 0), 0) / 60)} min au total</small></div></div>
         <div class="g-card"><p>Connectez votre compte Google pour retrouver vos abonnements, vidéos « J'aime » et playlists YouTube.</p>
         <button class="g-btn" data-act="gsignin">${ic('google')}Se connecter avec Google</button>
         <small>Vous vous identifiez sur la page de Google : Lumen ne voit jamais votre mot de passe. Accès en lecture seule, révocable à tout moment.</small></div>`}
@@ -295,7 +296,10 @@ const Reco = {
     .map((v) => [this.score(v, p) + (v.cat === cur.cat ? 1 : 0) + (v.channel === cur.channel ? .5 : 0), v]).sort((a, b) => b[0] - a[0]).map((x) => x[1]); },
   why(v) { const p = this.profile(); if (St.subs.includes(v.channel)) return 'De vos abonnements'; if ((p.cat[v.cat] || 0) > .3) return `Parce que vous regardez : ${v.cat}`; return ''; },
 };
-const byId = (id) => VIDEOS.find((v) => v.id === id) || CLIPS.find((v) => v.id === id) || Google.videos.get(id);
+function fmtWatched(ms) { const m = Math.floor((Date.now() - ms) / 60000); if (m < 1) return "à l'instant"; if (m < 60) return `il y a ${m} min`; const h = Math.floor(m / 60); if (h < 24) return `il y a ${h} h`; const d = Math.floor(h / 24); return d < 7 ? `il y a ${d} j` : `le ${new Date(ms).toLocaleDateString('fr-FR')}`; }
+const byId = (id) => VIDEOS.find((v) => v.id === id) || CLIPS.find((v) => v.id === id) || Google.videos.get(id) || St.vcache[id];
+const cacheVid = (v) => { if (v && (v.real || v.yt)) { St.vcache[v.id] = { id: v.id, yt: v.yt, title: v.title, channel: v.channel, channelId: v.channelId, views: v.views, likes: v.likes, comments: v.comments, ago: v.ago, secs: v.secs, dur: v.dur, cat: v.cat, subs: v.subs, real: true, thumbUrl: v.thumbUrl }; } };
+const watchPct = (id) => { const w = St.watched[id]; return w && w.secs ? Math.min(100, Math.round((w.t / w.secs) * 100)) : 0; };
 
 /* Contenus dérivés (descriptions, chapitres, commentaires) générés de façon déterministe */
 const NAMES = ['Camille', 'Yanis', 'Léa', 'Mehdi', 'Inès', 'Hugo', 'Sarah', 'Tom', 'Nora', 'Lucas', 'Chloé', 'Adam'];
@@ -410,8 +414,9 @@ const Pages = {
   list(kind) {
     const map = { gliked: ["Vidéos « J'aime » (YouTube)", Google.liked.map((v) => v.id)], history: ['Historique', St.history], later: ['À regarder plus tard', St.later], liked: ["Vidéos « J'aime »", St.liked], downloads: ['Téléchargements', St.downloads] };
     const [title, ids] = map[kind]; const vids = ids.map(byId).filter(Boolean);
-    $('#page-list').innerHTML = `<header class="appbar"><button class="ib" data-act="back">${ic('back')}</button><span class="ap-title">${title}</span><span style="width:40px"></span></header>
-      ${vids.length ? `<div class="list-meta">${vids.length} vidéo${vids.length > 1 ? 's' : ''}${kind === 'downloads' ? ' · disponibles hors connexion (démo)' : ''}</div>` + vids.map((v) => UI.resultRow(v, kind === 'gliked' ? '' : kind)).join('') : `<div class="empty"><b>Rien ici</b>Cette liste est vide pour l'instant.</div>`}`;
+    const total = kind === 'history' ? Math.round(Object.values(St.watched).reduce((a, w) => a + (w.t || 0), 0) / 60) : 0;
+    $('#page-list').innerHTML = `<header class="appbar"><button class="ib" data-act="back">${ic('back')}</button><span class="ap-title">${title}</span>${kind === 'history' && vids.length ? `<button class="ib" data-act="clearhist" aria-label="Tout effacer">${ic('trash')}</button>` : '<span style="width:40px"></span>'}</header>
+      ${vids.length ? `<div class="list-meta">${vids.length} vidéo${vids.length > 1 ? 's' : ''}${kind === 'history' ? ` · ${total} min de visionnage au total` : ''}${kind === 'downloads' ? ' · disponibles hors connexion (démo)' : ''}</div>` + vids.map((v) => UI.resultRow(v, kind === 'gliked' ? '' : kind)).join('') : `<div class="empty"><b>Rien ici</b>Cette liste est vide pour l'instant.</div>`}`;
     UI.go('list');
   },
 };
@@ -420,7 +425,13 @@ const Pages = {
 const Watch = {
   v: null, t: 0, playing: false, timer: null, uiTimer: null,
   open(v) {
-    this.v = v; this.t = 0; St.history = [v.id, ...St.history.filter((x) => x !== v.id)].slice(0, 20); save();
+    this.v = v; cacheVid(v);
+    const w = St.watched[v.id];
+    this.t = w && w.secs && w.t < w.secs - 10 ? w.t : 0; // reprise si la vidéo n'était pas finie
+    St.history = [v.id, ...St.history.filter((x) => x !== v.id)].slice(0, 200);
+    St.watched[v.id] = { at: Date.now(), t: this.t, secs: v.secs || 0, count: (w?.count || 0) + 1 };
+    save();
+    if (this.t > 0) toast(`Reprise à ${ts(this.t)}`);
     UI.go('watch'); this.renderPlayer(); this.renderInfo();
   },
   renderPlayer() {
@@ -456,6 +467,7 @@ const Watch = {
     this.playing = true; this.syncPP(); clearInterval(this.timer);
     this.timer = setInterval(() => {
       this.t += .25 * St.speed; const day = new Date().toDateString(); St.watchByDay[day] = (St.watchByDay[day] || 0) + .25;
+      const w = St.watched[this.v.id]; if (w) { w.t = this.t; w.secs = this.v.secs || w.secs; }
       if (this.t >= this.v.secs) { this.t = this.v.secs; clearInterval(this.timer); save(); if (St.autoplay && this.next?.[0]) { toast('Lecture de la vidéo suivante'); return this.open(this.next[0]); } this.playing = false; this.syncPP(); }
       this.syncBar(); if (Math.round(this.t * 4) % 40 === 0) save();
     }, 250); this.flashUI();
@@ -497,7 +509,7 @@ document.addEventListener('click', (e) => {
   const ypl = t.closest('[data-ypl]'); if (ypl) return Pages.ytPlaylist(ypl.dataset.ypl);
   const lst = t.closest('[data-list]'); if (lst) return Pages.list(lst.dataset.list);
   const rm = t.closest('[data-rm]'); if (rm) { e.stopPropagation(); const [k, id] = rm.dataset.rm.split(':'); const key = { history: 'history', later: 'later', liked: 'liked', downloads: 'downloads' }[k];
-    St[key] = St[key].filter((x) => x !== id); save(); toast('Retiré de la liste'); return Pages.list(k); }
+    St[key] = St[key].filter((x) => x !== id); if (k === 'history') delete St.watched[id]; save(); toast(k === 'history' ? 'Retiré de l\'historique' : 'Retiré de la liste'); return Pages.list(k); }
   const v = t.closest('[data-v]'); if (v) { const vid = byId(v.dataset.v); if (vid?.id.startsWith('c')) return UI.go('clips'); return Watch.open(vid); }
   const clip = t.closest('[data-clip]'); if (clip) return UI.go('clips');
   const q = t.closest('[data-q]'); if (q) { $('#q').value = q.dataset.q; return UI.results(q.dataset.q); }
@@ -513,6 +525,7 @@ document.addEventListener('click', (e) => {
   if (act === 'settings') return Sheets.settings();
   if (act === 'explore') return Sheets.explore();
   if (act === 'watchtime') return Sheets.watchTime();
+  if (act === 'clearhist') { if (!confirm('Effacer tout l\'historique de visionnage ?')) return; St.history = []; St.watched = {}; save(); toast('Historique effacé'); return Pages.list('history'); }
   if (act === 'gsignin') return Google.signIn();
   if (act === 'gsignout') return Google.signOut();
   if (act === 'adblock') { St.adblock = St.adblock === false; save(); toast(`Bloqueur de publicités ${St.adblock ? 'activé' : 'désactivé'}`); return UI.you(); }
@@ -537,4 +550,4 @@ if (new URLSearchParams(location.search).get('t')) setTimeout(() => { Watch.t = 
 const start = new URLSearchParams(location.search);
 UI.go(start.get('p') || 'home');
 if (start.get('v')) Watch.open(VIDEOS.find((v) => v.id === start.get('v')) || VIDEOS[0]);
-window.Lumen = { UI, Watch, VIDEOS, St, Pages, Reco, Sheets, Google };
+window.Lumen = { UI, Watch, VIDEOS, St, Pages, Reco, Sheets, Google, byId, save };
