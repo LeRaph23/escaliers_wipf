@@ -1,0 +1,4 @@
+# Projets Xcode générés par XcodeGen et fichiers locaux macOS
+*.xcodeproj/
+xcuserdata/
+.DS_Store
