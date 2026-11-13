@@ -10,6 +10,7 @@ struct RootView: View {
     @StateObject private var downloads = DownloadsStore()
     @State private var showBookmarks = false
     @State private var showPremium = false
+    @State private var showDownloads = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,7 +20,7 @@ struct RootView: View {
             }
             WebViewContainer().ignoresSafeArea(edges: .bottom)
             DownloadBanner().padding(.vertical, 6)
-            Toolbar(showBookmarks: $showBookmarks, showPremium: $showPremium)
+            Toolbar(showBookmarks: $showBookmarks, showPremium: $showPremium, showDownloads: $showDownloads)
         }
         .environmentObject(downloader)
         .environmentObject(tv)
@@ -39,6 +40,7 @@ struct RootView: View {
         }
         .sheet(isPresented: $showBookmarks) { BookmarksView() }
         .sheet(isPresented: $showPremium) { PremiumView() }
+        .sheet(isPresented: $showDownloads) { NavigationStack { DownloadsView() } }
         .fullScreenCover(isPresented: Binding(
             get: { tv.player != nil },
             set: { if !$0 { tv.close() } }
@@ -91,53 +93,94 @@ struct AddressBar: View {
 struct Toolbar: View {
     @EnvironmentObject var browser: BrowserModel
     @EnvironmentObject var downloader: VideoDownloader
-    @EnvironmentObject var tv: TVPlayback
     @Binding var showBookmarks: Bool
     @Binding var showPremium: Bool
+    @Binding var showDownloads: Bool
+
     var body: some View {
-        HStack {
-            Button(action: browser.back) { Image(systemName: "chevron.left") }.disabled(!browser.canGoBack)
-            Spacer()
-            Button(action: browser.forward) { Image(systemName: "chevron.right") }.disabled(!browser.canGoForward)
-            Spacer()
-            Button(action: browser.reload) { Image(systemName: "arrow.clockwise") }
-            Spacer()
-            Button {
-                guard let id = browser.currentVideoID else {
-                    browser.downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche « Lire sur la télé »."
-                    return
-                }
-                // Met en pause la vidéo de la page pour ne pas avoir deux sons en même temps.
-                browser.webView?.evaluateJavaScript("document.querySelectorAll('video').forEach(v => v.pause())")
-                downloader.start(videoID: id, title: browser.videoTitle, purpose: .tv)
+        HStack(alignment: .top, spacing: 0) {
+            ToolItem("Retour", systemImage: "chevron.left", action: browser.back)
+                .disabled(!browser.canGoBack)
+            ToolItem("Accueil", systemImage: "house", action: browser.goHome)
+            ToolItem("Sur la télé", systemImage: "tv",
+                     busy: downloader.isActive && downloader.purpose == .tv, action: playOnTV)
+                .disabled(downloader.isActive)
+            ToolItem("Télécharger", systemImage: "arrow.down.circle",
+                     busy: downloader.isActive && downloader.purpose == .library, action: download)
+                .disabled(downloader.isActive)
+            ToolItem("Mes vidéos", systemImage: "tray.full") { showDownloads = true }
+            Menu {
+                Button("Avancer", systemImage: "chevron.right", action: browser.forward)
+                    .disabled(!browser.canGoForward)
+                Button("Recharger", systemImage: "arrow.clockwise", action: browser.reload)
+                Button("Favoris", systemImage: "book") { showBookmarks = true }
+                Button("Premium", systemImage: "star") { showPremium = true }
             } label: {
-                if downloader.isActive && downloader.purpose == .tv { ProgressView() } else { Image(systemName: "tv") }
+                ToolLabel(title: "Plus", systemImage: "ellipsis.circle", busy: false)
             }
-            .disabled(downloader.isActive)
-            .frame(width: 28, height: 28)
-            .accessibilityLabel("Lire sur la télé en 1080p (AirPlay image + son)")
-            Spacer()
-            AirPlayButton().frame(width: 28, height: 28)
-            Spacer()
-            Button {
-                guard let id = browser.currentVideoID else {
-                    browser.downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche Télécharger."
-                    return
-                }
-                downloader.start(videoID: id, title: browser.videoTitle)
-            } label: {
-                Image(systemName: downloader.isActive ? "arrow.down.circle.fill" : "arrow.down.circle")
-            }
-            .disabled(downloader.isActive)
-            .accessibilityLabel("Télécharger la vidéo")
-            Spacer()
-            Button { showBookmarks = true } label: { Image(systemName: "book") }
-            Spacer()
-            Button { showPremium = true } label: { Image(systemName: "star") }
+            .frame(maxWidth: .infinity)
         }
-        .font(.title3)
-        .padding(.horizontal, 24).padding(.vertical, 10)
+        .padding(.horizontal, 4).padding(.top, 8).padding(.bottom, 2)
         .background(.bar)
+    }
+
+    /// Relit la vidéo affichée en 1080p dans le lecteur natif (AirPlay image + son).
+    private func playOnTV() {
+        guard let id = browser.currentVideoID else {
+            browser.downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche « Sur la télé »."
+            return
+        }
+        // Met en pause la vidéo de la page pour ne pas avoir deux sons en même temps.
+        browser.webView?.evaluateJavaScript("document.querySelectorAll('video').forEach(v => v.pause())")
+        downloader.start(videoID: id, title: browser.videoTitle, purpose: .tv)
+    }
+
+    /// Télécharge la vidéo affichée dans « Mes vidéos ».
+    private func download() {
+        guard let id = browser.currentVideoID else {
+            browser.downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche « Télécharger »."
+            return
+        }
+        downloader.start(videoID: id, title: browser.videoTitle, purpose: .library)
+    }
+}
+
+/// Bouton de la barre du bas : icône + nom en dessous.
+struct ToolItem: View {
+    let title: String
+    let systemImage: String
+    var busy = false
+    let action: () -> Void
+
+    init(_ title: String, systemImage: String, busy: Bool = false, action: @escaping () -> Void) {
+        self.title = title
+        self.systemImage = systemImage
+        self.busy = busy
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) { ToolLabel(title: title, systemImage: systemImage, busy: busy) }
+            .frame(maxWidth: .infinity)
+            .accessibilityLabel(title)
+    }
+}
+
+struct ToolLabel: View {
+    let title: String
+    let systemImage: String
+    let busy: Bool
+
+    var body: some View {
+        VStack(spacing: 3) {
+            Group {
+                if busy { ProgressView() } else { Image(systemName: systemImage).font(.system(size: 20)) }
+            }
+            .frame(height: 24)
+            Text(title).font(.caption2).lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
     }
 }
 
@@ -185,7 +228,7 @@ struct DownloadBanner: View {
         case .video(let p): return "Vidéo · \(Int(p * 100)) %"
         case .audio(let p): return "Audio · \(Int(p * 100)) %"
         case .merging: return "Assemblage vidéo + audio…"
-        case .done: return downloader.purpose == .tv ? "Prête : lecture sur la télé" : "Enregistrée dans Téléchargements (Favoris › Téléchargements)"
+        case .done: return downloader.purpose == .tv ? "Prête : lecture sur la télé" : "Enregistrée dans « Mes vidéos »"
         case .failed(let message): return "Échec : \(message)"
         }
     }
@@ -245,7 +288,7 @@ struct BookmarksView: View {
                 NavigationLink {
                     DownloadsView()
                 } label: {
-                    Label("Téléchargements", systemImage: "arrow.down.circle")
+                    Label("Mes vidéos", systemImage: "tray.full")
                 }
                 Button("Ajouter la page actuelle") { browser.bookmarkCurrent() }
                 ForEach(browser.bookmarks) { b in

@@ -43,18 +43,22 @@ C'est exactement le fonctionnement de YouPlay.
 > La configuration Google Cloud (OAuth) que tu as faite concerne **Lumen web**, pas cette app iOS.
 > Lumen iOS n'a besoin d'aucune clé : tu te connectes directement sur youtube.com dans le navigateur intégré.
 
+## Barre du bas
+**Retour · Accueil · Sur la télé · Télécharger · Mes vidéos · Plus** (le menu *Plus* contient Avancer,
+Recharger, Favoris et Premium). « Accueil » ramène sur YouTube, ouvert directement au lancement.
+
 ## AirPlay (image + son) et téléchargement
-- **AirPlay 1080p, image + son (bouton 📺 « Lire sur la télé »).** Le site mobile de YouTube joue ses vidéos
+- **AirPlay 1080p, image + son (bouton « Sur la télé » en bas).** Le site mobile de YouTube joue ses vidéos
   via Media Source Extensions : iOS ne sait pas les envoyer en AirPlay (seul le son part). Et la 1080p n'existe
   chez YouTube qu'en pistes vidéo et audio séparées, qu'AirPlay ne relit pas telles quelles. Sur une page de
-  vidéo, le bouton 📺 **prépare donc un MP4 1080p** (mêmes étapes que le téléchargement, progression dans la
+  vidéo, le bouton **Sur la télé** **prépare donc un MP4 1080p** (mêmes étapes que le téléchargement, progression dans la
   bannière), puis l'ouvre dans le **lecteur natif d'iOS** : touche l'icône AirPlay du lecteur et choisis ta télé.
-  Le fichier est supprimé à la fermeture du lecteur. Astuce : une vidéo déjà dans Téléchargements part
+  Le fichier est supprimé à la fermeture du lecteur. Astuce : une vidéo déjà dans Mes vidéos part
   en AirPlay 1080p **sans attente**.
   > Temps d'attente : il faut d'abord récupérer la vidéo (~30 s pour 10 min de vidéo à 5 Mo/s).
   > Alternative immédiate sans attente : **Recopie de l'écran** (Centre de contrôle) + vidéo en plein écran.
-- **Téléchargement natif (bouton ⬇︎), gardé dans l'app.** Sur une page de vidéo YouTube, le bouton
-  télécharge la vidéo en **MP4 jusqu'à 1080p** dans la bibliothèque **Téléchargements** de l'app
+- **Téléchargement natif (bouton « Télécharger » en bas), gardé dans l'app.** Sur une page de vidéo YouTube, le bouton
+  télécharge la vidéo en **MP4 jusqu'à 1080p** dans la bibliothèque **Mes vidéos** de l'app
   (**rien n'est enregistré dans Photos**, aucune autorisation demandée) :
   1. la bibliothèque open source **YouTubeKit** (Swift Package, ajoutée automatiquement par `project.yml`)
      liste les flux de la vidéo ;
@@ -62,7 +66,7 @@ C'est exactement le fonctionnement de YouPlay.
      de 10 Mo avec 5 tentatives par morceau** (parade aux coupures HTTP 403) ;
   3. AVFoundation assemble vidéo + audio **sans réencodage**.
   Une bannière affiche la progression avec un bouton Annuler.
-  **Retrouver ses vidéos :** bouton 📖 (Favoris) → **Téléchargements**. Touche une vidéo pour la lire dans le
+  **Retrouver ses vidéos :** bouton **Mes vidéos** en bas. Touche une vidéo pour la lire dans le
   lecteur natif — et l'envoyer **immédiatement en AirPlay 1080p**, sans attente puisqu'elle est déjà sur le
   téléphone. Glisse vers la gauche pour supprimer. Le dossier est aussi visible dans l'app **Fichiers**
   (Sur mon iPhone › Lumen › Téléchargements).

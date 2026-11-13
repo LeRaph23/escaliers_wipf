@@ -94,6 +94,7 @@ final class BrowserModel: NSObject, ObservableObject, WKNavigationDelegate {
     func back() { webView?.goBack() }
     func forward() { webView?.goForward() }
     func reload() { webView?.reload() }
+    func goHome() { open(Self.homeURL) }
 
     // MARK: Téléchargement
     /// Message affiché quand le téléchargement ne peut pas démarrer.

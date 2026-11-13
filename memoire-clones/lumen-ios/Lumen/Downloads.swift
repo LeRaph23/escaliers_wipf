@@ -75,7 +75,7 @@ struct DownloadsView: View {
     var body: some View {
         List {
             if downloads.items.isEmpty {
-                Text("Aucune vidéo téléchargée. Ouvre une vidéo YouTube et touche ⬇︎.")
+                Text("Aucune vidéo téléchargée. Ouvre une vidéo YouTube et touche « Télécharger » en bas.")
                     .foregroundStyle(.secondary)
             }
             ForEach(downloads.items) { item in
@@ -99,6 +99,6 @@ struct DownloadsView: View {
             }
             .onDelete { offsets in offsets.map { downloads.items[$0] }.forEach(downloads.delete) }
         }
-        .navigationTitle("Téléchargements")
+        .navigationTitle("Mes vidéos")
     }
 }
