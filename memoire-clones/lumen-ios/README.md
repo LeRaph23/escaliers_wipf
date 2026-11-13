@@ -48,9 +48,13 @@ C'est exactement le fonctionnement de YouPlay.
   ce qui ne renvoyait que le son). Touche l'icône AirPlay et choisis ta télé → image + son. Si une page/lecteur
   bloque quand même l'AirPlay vidéo, la méthode garantie reste la **Recopie de l'écran** depuis le Centre de
   contrôle d'iOS (elle envoie tout l'écran, image + son).
-- **Téléchargement de vidéos YouTube : volontairement non implémenté.** Télécharger une vidéo YouTube impose
-  d'extraire son flux (façon youtube-dl), ce qui viole les CGU de YouTube. La voie légale de l'hors-ligne est
-  **YouTube Premium** (bouton Télécharger officiel). Voir `../ANALYSE.md`.
+- **Bouton Télécharger (relais vers un raccourci).** L'app **ne contient aucun code de téléchargement**. Sur une
+  page de vidéo YouTube, le bouton ⬇︎ transmet le lien au raccourci iOS **« YT HD »** que l'utilisateur a créé
+  lui-même (chaîne d'outils externe : a-Shell + yt-dlp + Raccourcis, non fournie dans ce dépôt). Le lien est aussi
+  copié dans le presse-papiers, au cas où le raccourci ne reçoit pas d'entrée. Sans ce raccourci, le bouton
+  affiche simplement un message d'erreur.
+  > Usage de démonstration uniquement : télécharger des vidéos YouTube est contraire à ses CGU. La voie légale de
+  > l'hors-ligne est **YouTube Premium**. Une app qui embarquerait ce bouton serait refusée sur l'App Store.
 
 ## Note de sécurité (pour le mémoire)
 Une app-navigateur peut injecter du JavaScript dans toutes les pages affichées. `PlaybackSupport.swift`

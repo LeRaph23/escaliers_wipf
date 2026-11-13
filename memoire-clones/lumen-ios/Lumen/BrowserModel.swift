@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import WebKit
 
 struct Bookmark: Codable, Identifiable, Hashable {
@@ -89,6 +90,56 @@ final class BrowserModel: NSObject, ObservableObject, WKNavigationDelegate {
     func back() { webView?.goBack() }
     func forward() { webView?.goForward() }
     func reload() { webView?.reload() }
+
+    // MARK: Relais vers le raccourci de téléchargement de l'utilisateur
+    /// Message affiché à l'utilisateur après un essai de téléchargement.
+    @Published var downloadNotice: String?
+
+    /// Nom exact du raccourci iOS créé par l'utilisateur (voir README).
+    static let downloadShortcutName = "YT HD"
+
+    /// L'app ne télécharge rien elle-même : elle transmet le lien de la vidéo affichée au raccourci
+    /// « YT HD » de l'utilisateur, qui fait tout le travail en dehors de l'app (démonstration
+    /// de reproductibilité pour le mémoire ; usage personnel uniquement).
+    func sendCurrentVideoToShortcut() {
+        guard let url = webView?.url, let videoURL = Self.youtubeVideoURL(from: url) else {
+            downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche Télécharger."
+            return
+        }
+        // Copie aussi le lien : le raccourci se rabat sur le presse-papiers s'il ne reçoit pas d'entrée.
+        UIPasteboard.general.string = videoURL.absoluteString
+        var c = URLComponents(string: "shortcuts://run-shortcut")!
+        c.queryItems = [
+            URLQueryItem(name: "name", value: Self.downloadShortcutName),
+            URLQueryItem(name: "input", value: "text"),
+            URLQueryItem(name: "text", value: videoURL.absoluteString),
+        ]
+        guard let shortcutURL = c.url else { return }
+        UIApplication.shared.open(shortcutURL) { [weak self] ok in
+            Task { @MainActor in
+                if !ok { self?.downloadNotice = "Impossible d'ouvrir Raccourcis. Vérifie que le raccourci « \(Self.downloadShortcutName) » existe." }
+            }
+        }
+    }
+
+    /// Reconnaît une page de vidéo YouTube et renvoie son lien canonique.
+    static func youtubeVideoURL(from url: URL) -> URL? {
+        guard let host = url.host?.lowercased() else { return nil }
+        var id: String?
+        if host == "youtu.be" {
+            id = url.pathComponents.dropFirst().first
+        } else if host == "youtube.com" || host.hasSuffix(".youtube.com") {
+            let parts = url.pathComponents
+            if url.path == "/watch" {
+                id = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                    .queryItems?.first(where: { $0.name == "v" })?.value
+            } else if parts.count >= 3, ["shorts", "live", "embed"].contains(parts[1]) {
+                id = parts[2]
+            }
+        }
+        guard let id, id.count == 11 else { return nil }
+        return URL(string: "https://www.youtube.com/watch?v=\(id)")
+    }
 
     func bookmarkCurrent() {
         guard let url = webView?.url else { return }

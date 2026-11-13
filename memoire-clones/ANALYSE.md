@@ -157,3 +157,22 @@ La demande — écouter de vraies musiques, écran verrouillé, gratuitement —
 **Téléchargement de vidéos (refusé).** Demande récurrente dans les clones : enregistrer la vidéo hors-ligne. Techniquement, cela suppose d'**extraire le flux média** via l'API interne ou un analyseur de type youtube-dl — exactement la même rupture que pour l'audio-only de Demus (§11-12) : accès au service hors interface/API publiques, interdit par les CGU. Ce dépôt ne l'implémente pas ; l'hors-ligne licite passe par l'offre Premium de la plateforme.
 
 **Le fil conducteur du mémoire.** Les fonctions « confort » les plus réclamées d'un clone — télécharger, écouter l'audio seul en fond, retirer la pub — partagent toutes le même mécanisme sous-jacent : contourner le cadre d'accès prévu par la plateforme. C'est ce mécanisme, et non la ressemblance de l'interface, qui fait basculer un clone d'étude vers un clone contrefaisant. Un outil capable de reproduire l'enveloppe en quelques heures rend ce basculement trivial : d'où l'enjeu, pour l'ANSSI/SGDSN, de surveiller la distribution (stores alternatifs, APK tiers) et la détection, plutôt que de miser sur la difficulté de copie.
+
+## 14. Cas d'étude : la fonction « Télécharger » reconstituée à partir d'outils publics
+
+**Constat.** La fonction de téléchargement hors-ligne, que YouTube réserve à son offre Premium, a été reconstituée sur un iPhone **sans serveur ni compétence avancée**, en assemblant :
+- une application gratuite de l'App Store (terminal a-Shell, qui embarque Python et ffmpeg) ;
+- un outil libre de téléchargement (yt-dlp) ;
+- environ 30 lignes de script, guidées par une IA ;
+- deux raccourcis iOS (déclenchement depuis la feuille de partage, puis enregistrement dans Photos).
+
+Les seuls obstacles rencontrés (coupure HTTP 403 sur les requêtes longues, avertissement de moteur JavaScript) ont été levés par de simples réglages (téléchargement par morceaux, nouvelles tentatives).
+
+**Intégration dans le clone.** Lumen iOS expose un bouton « Télécharger » qui se contente de **transmettre l'URL de la vidéo à ce raccourci** (schéma `shortcuts://`). L'application elle-même ne contient aucun code d'extraction. C'est précisément ce qui rend le cas instructif : une app d'apparence anodine peut **déléguer** la partie contrevenante à une chaîne d'outils extérieure, ce qui rend son examen statique (revue App Store, analyse du binaire) insuffisant pour détecter la fonction réelle.
+
+**Enseignements pour l'ANSSI / SGDSN.**
+1. La reproductibilité ne passe pas seulement par la réécriture de code : elle passe par l'**assemblage** de briques publiques, que l'IA rend accessible à un non-spécialiste.
+2. Les protections de la plateforme (limites de débit, chiffrement des signatures) ralentissent mais n'empêchent pas ; elles sont contournées en quelques itérations.
+3. Le contrôle efficace se situe côté **distribution et usage** (stores, raccourcis partagés, détection côté serveur), non côté difficulté technique.
+
+Ce dépôt ne fournit pas la chaîne d'outils elle-même ; seul le relais depuis l'app y figure, pour la démonstration.

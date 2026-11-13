@@ -19,6 +19,14 @@ struct RootView: View {
         }
         .sheet(isPresented: $showBookmarks) { BookmarksView() }
         .sheet(isPresented: $showPremium) { PremiumView() }
+        .alert("Téléchargement", isPresented: Binding(
+            get: { browser.downloadNotice != nil },
+            set: { if !$0 { browser.downloadNotice = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(browser.downloadNotice ?? "")
+        }
     }
 }
 
@@ -55,6 +63,9 @@ struct Toolbar: View {
             Button(action: browser.reload) { Image(systemName: "arrow.clockwise") }
             Spacer()
             AirPlayButton().frame(width: 28, height: 28)
+            Spacer()
+            Button(action: browser.sendCurrentVideoToShortcut) { Image(systemName: "arrow.down.circle") }
+                .accessibilityLabel("Télécharger la vidéo")
             Spacer()
             Button { showBookmarks = true } label: { Image(systemName: "book") }
             Spacer()
