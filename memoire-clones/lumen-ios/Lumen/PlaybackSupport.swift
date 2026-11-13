@@ -15,7 +15,7 @@ enum PlaybackSupport {
         }
     }
 
-    /// Configuration WKWebView : lecture inline, PiP et AirPlay autorisés.
+    /// Configuration WKWebView : lecture inline, PiP et AirPlay (image + son) autorisés.
     static func makeConfiguration(blocker: WKContentRuleList?) -> WKWebViewConfiguration {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
@@ -36,6 +36,12 @@ enum PlaybackSupport {
             Object.defineProperty(document, 'hidden', { get: () => false });
             Object.defineProperty(document, 'visibilityState', { get: () => 'visible' });
             document.addEventListener('visibilitychange', e => e.stopImmediatePropagation(), true);
+            // AirPlay IMAGE + SON : le lecteur YouTube n'active pas l'AirPlay vidéo sur sa balise <video>,
+            // d'où « son seulement ». On force l'attribut sur chaque vidéo, présente ou ajoutée ensuite.
+            const allowAir = (v) => { try { v.setAttribute('x-webkit-airplay', 'allow'); v.disableRemotePlayback = false; } catch (e) {} };
+            const scan = () => document.querySelectorAll('video').forEach(allowAir);
+            try { new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
+            setInterval(scan, 3000); scan();
             })();
             """, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         config.userContentController.addUserScript(keepAlive)

@@ -43,6 +43,15 @@ C'est exactement le fonctionnement de YouPlay.
 > La configuration Google Cloud (OAuth) que tu as faite concerne **Lumen web**, pas cette app iOS.
 > Lumen iOS n'a besoin d'aucune clé : tu te connectes directement sur youtube.com dans le navigateur intégré.
 
+## AirPlay (image + son) et téléchargement
+- **AirPlay vidéo** : l'app force l'AirPlay sur les balises `<video>` (le lecteur YouTube ne l'active pas seul,
+  ce qui ne renvoyait que le son). Touche l'icône AirPlay et choisis ta télé → image + son. Si une page/lecteur
+  bloque quand même l'AirPlay vidéo, la méthode garantie reste la **Recopie de l'écran** depuis le Centre de
+  contrôle d'iOS (elle envoie tout l'écran, image + son).
+- **Téléchargement de vidéos YouTube : volontairement non implémenté.** Télécharger une vidéo YouTube impose
+  d'extraire son flux (façon youtube-dl), ce qui viole les CGU de YouTube. La voie légale de l'hors-ligne est
+  **YouTube Premium** (bouton Télécharger officiel). Voir `../ANALYSE.md`.
+
 ## Note de sécurité (pour le mémoire)
 Une app-navigateur peut injecter du JavaScript dans toutes les pages affichées. `PlaybackSupport.swift`
 exclut **explicitement** les pages de connexion (Google, Apple, Microsoft) de toute injection — à l'inverse
