@@ -55,13 +55,18 @@ final class BrowserModel: NSObject, ObservableObject, WKNavigationDelegate {
         wv.navigationDelegate = self
         wv.allowsBackForwardNavigationGestures = true
         wv.customUserAgent = nil // UA Safari mobile par défaut
+        // Ne publie que les vrais changements : chaque publication redessine toute l'interface,
+        // et YouTube fait bouger sa progression de chargement en continu.
         observers = [
             wv.observe(\.estimatedProgress) { [weak self] v, _ in
-                Task { @MainActor in self?.progress = v.estimatedProgress } },
+                let p = (v.estimatedProgress * 20).rounded() / 20   // paliers de 5 %
+                Task { @MainActor in if self?.progress != p { self?.progress = p } } },
             wv.observe(\.canGoBack) { [weak self] v, _ in
-                Task { @MainActor in self?.canGoBack = v.canGoBack } },
+                let b = v.canGoBack
+                Task { @MainActor in if self?.canGoBack != b { self?.canGoBack = b } } },
             wv.observe(\.canGoForward) { [weak self] v, _ in
-                Task { @MainActor in self?.canGoForward = v.canGoForward } },
+                let f = v.canGoForward
+                Task { @MainActor in if self?.canGoForward != f { self?.canGoForward = f } } },
         ]
         // Au lancement (aucune page précédente), on ouvre directement YouTube.
         let previous = webView?.url

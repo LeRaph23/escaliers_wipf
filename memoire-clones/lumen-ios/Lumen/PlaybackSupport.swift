@@ -36,12 +36,9 @@ enum PlaybackSupport {
             Object.defineProperty(document, 'hidden', { get: () => false });
             Object.defineProperty(document, 'visibilityState', { get: () => 'visible' });
             document.addEventListener('visibilitychange', e => e.stopImmediatePropagation(), true);
-            // AirPlay IMAGE + SON : le lecteur YouTube n'active pas l'AirPlay vidéo sur sa balise <video>,
-            // d'où « son seulement ». On force l'attribut sur chaque vidéo, présente ou ajoutée ensuite.
-            const allowAir = (v) => { try { v.setAttribute('x-webkit-airplay', 'allow'); v.disableRemotePlayback = false; } catch (e) {} };
-            const scan = () => document.querySelectorAll('video').forEach(allowAir);
-            try { new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
-            setInterval(scan, 3000); scan();
+            // Note : plus aucun observateur de la page ici. L'ancien script AirPlay surveillait chaque
+            // modification du DOM de YouTube (qui change en continu pendant la lecture) et faisait ramer
+            // l'app ; l'AirPlay image + son passe désormais par le lecteur natif (« Sur la télé »).
             })();
             """, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         config.userContentController.addUserScript(keepAlive)
