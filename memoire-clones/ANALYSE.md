@@ -168,11 +168,11 @@ La demande — écouter de vraies musiques, écran verrouillé, gratuitement —
 
 Les seuls obstacles rencontrés (coupure HTTP 403 sur les requêtes longues, avertissement de moteur JavaScript) ont été levés par de simples réglages (téléchargement par morceaux, nouvelles tentatives).
 
-**Intégration dans le clone.** Lumen iOS expose un bouton « Télécharger » qui se contente de **transmettre l'URL de la vidéo à ce raccourci** (schéma `shortcuts://`). L'application elle-même ne contient aucun code d'extraction. C'est précisément ce qui rend le cas instructif : une app d'apparence anodine peut **déléguer** la partie contrevenante à une chaîne d'outils extérieure, ce qui rend son examen statique (revue App Store, analyse du binaire) insuffisant pour détecter la fonction réelle.
+**Intégration dans le clone.** À la demande de l'encadrement, la fonction a ensuite été intégrée **nativement** dans Lumen iOS : une bibliothèque open source (YouTubeKit, ~400 lignes d'appel côté app) fournit les flux, l'app télécharge par morceaux, assemble vidéo et audio avec AVFoundation et enregistre le résultat dans Photos. Le passage de la chaîne d'outils externe (a-Shell + yt-dlp + Raccourcis) à une fonction intégrée de l'app a pris **une seule itération de développement assisté par IA**, sans aucune expertise préalable du format des flux YouTube. La build de démonstration n'est pas distribuée.
 
 **Enseignements pour l'ANSSI / SGDSN.**
 1. La reproductibilité ne passe pas seulement par la réécriture de code : elle passe par l'**assemblage** de briques publiques, que l'IA rend accessible à un non-spécialiste.
 2. Les protections de la plateforme (limites de débit, chiffrement des signatures) ralentissent mais n'empêchent pas ; elles sont contournées en quelques itérations.
 3. Le contrôle efficace se situe côté **distribution et usage** (stores, raccourcis partagés, détection côté serveur), non côté difficulté technique.
 
-Ce dépôt ne fournit pas la chaîne d'outils elle-même ; seul le relais depuis l'app y figure, pour la démonstration.
+Le code d'intégration figure dans `lumen-ios/Lumen/VideoDownloader.swift`, à titre de démonstration ; l'extraction proprement dite repose sur une bibliothèque tierce publique. L'app n'est pas destinée à être distribuée.

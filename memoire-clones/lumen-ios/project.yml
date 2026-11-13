@@ -6,12 +6,20 @@ options:
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
+packages:
+  # Extraction des flux YouTube (bibliothèque open source, MIT). Suit « main » : YouTube change souvent,
+  # les correctifs d'extraction arrivent vite. Pour figer une version : remplacer par  from: "x.y.z".
+  YouTubeKit:
+    url: https://github.com/alexeichhorn/YouTubeKit
+    branch: main
 targets:
   Lumen:
     type: application
     platform: iOS
     sources:
       - path: Lumen
+    dependencies:
+      - package: YouTubeKit
     info:
       path: Lumen/Info.plist
       properties:
@@ -27,6 +35,8 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         ITSAppUsesNonExemptEncryption: false
+        # Enregistrement des vidéos téléchargées dans Photos.
+        NSPhotoLibraryAddUsageDescription: Lumen enregistre les vidéos téléchargées dans ta photothèque.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.exemple.lumen

@@ -5,6 +5,7 @@ import AVKit
 struct RootView: View {
     @EnvironmentObject var browser: BrowserModel
     @EnvironmentObject var store: PremiumStore
+    @StateObject private var downloader = VideoDownloader()
     @State private var showBookmarks = false
     @State private var showPremium = false
 
@@ -15,8 +16,10 @@ struct RootView: View {
                 ProgressView(value: browser.progress).progressViewStyle(.linear)
             }
             WebViewContainer().ignoresSafeArea(edges: .bottom)
+            DownloadBanner().padding(.vertical, 6)
             Toolbar(showBookmarks: $showBookmarks, showPremium: $showPremium)
         }
+        .environmentObject(downloader)
         .sheet(isPresented: $showBookmarks) { BookmarksView() }
         .sheet(isPresented: $showPremium) { PremiumView() }
         .alert("Téléchargement", isPresented: Binding(
@@ -52,6 +55,7 @@ struct AddressBar: View {
 
 struct Toolbar: View {
     @EnvironmentObject var browser: BrowserModel
+    @EnvironmentObject var downloader: VideoDownloader
     @Binding var showBookmarks: Bool
     @Binding var showPremium: Bool
     var body: some View {
@@ -64,8 +68,17 @@ struct Toolbar: View {
             Spacer()
             AirPlayButton().frame(width: 28, height: 28)
             Spacer()
-            Button(action: browser.sendCurrentVideoToShortcut) { Image(systemName: "arrow.down.circle") }
-                .accessibilityLabel("Télécharger la vidéo")
+            Button {
+                guard let id = browser.currentVideoID else {
+                    browser.downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche Télécharger."
+                    return
+                }
+                downloader.start(videoID: id, title: browser.title)
+            } label: {
+                Image(systemName: downloader.isActive ? "arrow.down.circle.fill" : "arrow.down.circle")
+            }
+            .disabled(downloader.isActive)
+            .accessibilityLabel("Télécharger la vidéo")
             Spacer()
             Button { showBookmarks = true } label: { Image(systemName: "book") }
             Spacer()
@@ -74,6 +87,80 @@ struct Toolbar: View {
         .font(.title3)
         .padding(.horizontal, 24).padding(.vertical, 10)
         .background(.bar)
+    }
+}
+
+/// Progression du téléchargement, au-dessus de la barre d'outils.
+struct DownloadBanner: View {
+    @EnvironmentObject var downloader: VideoDownloader
+
+    var body: some View {
+        if downloader.phase != .idle {
+            HStack(spacing: 12) {
+                Image(systemName: symbol)
+                    .font(.title3)
+                    .foregroundStyle(tint)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(label).font(.subheadline.weight(.semibold)).lineLimit(2)
+                    if !downloader.title.isEmpty {
+                        Text(downloader.title).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    if let fraction {
+                        ProgressView(value: fraction).progressViewStyle(.linear)
+                    } else if downloader.isActive {
+                        ProgressView().progressViewStyle(.linear)
+                    }
+                }
+                Spacer(minLength: 0)
+                if downloader.isActive {
+                    Button("Annuler", role: .cancel) { downloader.cancel() }.font(.subheadline)
+                } else {
+                    Button { downloader.dismiss() } label: { Image(systemName: "xmark.circle.fill") }
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("Fermer")
+                }
+            }
+            .padding(12)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.horizontal)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    private var label: String {
+        switch downloader.phase {
+        case .idle: return ""
+        case .analyzing: return "Analyse de la vidéo…"
+        case .video(let p): return "Vidéo · \(Int(p * 100)) %"
+        case .audio(let p): return "Audio · \(Int(p * 100)) %"
+        case .merging: return "Assemblage vidéo + audio…"
+        case .saving: return "Enregistrement dans Photos…"
+        case .done: return "Enregistrée dans Photos"
+        case .failed(let message): return "Échec : \(message)"
+        }
+    }
+
+    private var fraction: Double? {
+        switch downloader.phase {
+        case .video(let p), .audio(let p): return p
+        default: return nil
+        }
+    }
+
+    private var symbol: String {
+        switch downloader.phase {
+        case .done: return "checkmark.circle.fill"
+        case .failed: return "exclamationmark.triangle.fill"
+        default: return "arrow.down.circle"
+        }
+    }
+
+    private var tint: Color {
+        switch downloader.phase {
+        case .done: return .green
+        case .failed: return .orange
+        default: return .accentColor
+        }
     }
 }
 
