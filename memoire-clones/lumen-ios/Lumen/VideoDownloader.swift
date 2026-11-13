@@ -17,8 +17,14 @@ final class VideoDownloader: ObservableObject {
         case failed(String)
     }
 
+    /// Destination du fichier HD : la photothèque, ou la lecture sur la télé (AirPlay 1080p).
+    enum Purpose { case photos, tv }
+
     @Published var phase: Phase = .idle
     @Published private(set) var title = ""
+    @Published private(set) var purpose: Purpose = .photos
+    /// Fichier 1080p prêt à être lu sur la télé (mode .tv).
+    @Published var tvFile: URL?
     private var task: Task<Void, Never>?
 
     var isActive: Bool {
@@ -28,9 +34,10 @@ final class VideoDownloader: ObservableObject {
         }
     }
 
-    func start(videoID: String, title: String) {
+    func start(videoID: String, title: String, purpose: Purpose = .photos) {
         guard !isActive else { return }
         self.title = title
+        self.purpose = purpose
         phase = .analyzing
         task = Task {
             do {
@@ -74,10 +81,20 @@ final class VideoDownloader: ObservableObject {
             throw DownloadError.noStream
         }
 
-        phase = .saving
-        try await Self.saveToPhotos(out)
-        try? fm.removeItem(at: out)
-        phase = .done
+        switch purpose {
+        case .photos:
+            phase = .saving
+            try await Self.saveToPhotos(out)
+            try? fm.removeItem(at: out)
+            phase = .done
+        case .tv:
+            // Gardé en cache le temps de la lecture ; supprimé à la fermeture du lecteur.
+            let dest = fm.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("lumen-tv.mp4")
+            try? fm.removeItem(at: dest)
+            try fm.moveItem(at: out, to: dest)
+            phase = .done
+            tvFile = dest
+        }
     }
 
     /// Assemble la piste vidéo et la piste audio dans un MP4, sans réencodage (passthrough).

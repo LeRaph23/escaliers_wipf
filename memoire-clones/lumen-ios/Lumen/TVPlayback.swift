@@ -1,48 +1,39 @@
 import SwiftUI
 import AVKit
-import YouTubeKit
 
-/// « Lire sur la télé » : rejoue la vidéo YouTube affichée dans le lecteur natif d'iOS (AVPlayer),
-/// qui sait envoyer image + son en AirPlay.
+/// « Lire sur la télé » en 1080p.
 ///
-/// Pourquoi c'est nécessaire : le site mobile de YouTube joue ses vidéos via Media Source Extensions
-/// (des morceaux assemblés dans la page). iOS ne peut pas transmettre ce type de vidéo en AirPlay :
-/// seule la sortie audio de l'app part vers la télé. Le lecteur natif, lui, lit une URL de flux que
-/// l'Apple TV / la télé AirPlay récupère directement.
+/// Le site mobile de YouTube joue ses vidéos via Media Source Extensions : iOS ne peut pas les envoyer
+/// en AirPlay (seul le son part). Et chez YouTube, la 1080p n'existe qu'en pistes vidéo et audio séparées,
+/// qu'AirPlay ne sait pas relire telles quelles. On prépare donc d'abord un MP4 1080p complet
+/// (VideoDownloader, mode .tv), puis on le lit dans le lecteur natif d'iOS : l'iPhone le diffuse
+/// en AirPlay, image + son, en pleine qualité.
 @MainActor
 final class TVPlayback: ObservableObject {
     @Published private(set) var player: AVPlayer?
-    @Published private(set) var loading = false
+    private var file: URL?
 
-    func open(videoID: String, onError: @escaping (String) -> Void) {
-        guard !loading else { return }
-        loading = true
-        Task {
-            defer { loading = false }
-            do {
-                let streams = try await YouTube(videoID: videoID, methods: [.local, .remote]).streams
-                // Flux unique vidéo + audio : c'est ce qu'AirPlay sait lire directement.
-                guard let stream = streams.filterVideoAndAudio()
-                    .filter({ $0.isNativelyPlayable })
-                    .highestResolutionStream()
-                else { throw DownloadError.noStream }
-                let p = AVPlayer(url: stream.url)
-                p.allowsExternalPlayback = true
-                player = p
-                p.play()
-            } catch {
-                onError("Lecture impossible : \(error.localizedDescription)")
-            }
-        }
+    func play(file: URL) {
+        // Arrête une éventuelle lecture précédente sans effacer le nouveau fichier (même chemin en cache).
+        player?.pause()
+        player = nil
+        if let old = self.file, old != file { try? FileManager.default.removeItem(at: old) }
+        self.file = file
+        let p = AVPlayer(url: file)
+        p.allowsExternalPlayback = true
+        player = p
+        p.play()
     }
 
     func close() {
         player?.pause()
         player = nil
+        if let file { try? FileManager.default.removeItem(at: file) }
+        file = nil
     }
 }
 
-/// Lecteur plein écran d'iOS, avec son propre bouton AirPlay et l'image en plein écran.
+/// Lecteur plein écran d'iOS, avec son propre bouton AirPlay.
 struct NativePlayerView: UIViewControllerRepresentable {
     let player: AVPlayer
 
@@ -50,7 +41,6 @@ struct NativePlayerView: UIViewControllerRepresentable {
         let vc = AVPlayerViewController()
         vc.player = player
         vc.allowsPictureInPicturePlayback = true
-        vc.canStartPictureInPictureAutomaticallyFromInline = true
         return vc
     }
 

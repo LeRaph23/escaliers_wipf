@@ -22,6 +22,13 @@ struct RootView: View {
         }
         .environmentObject(downloader)
         .environmentObject(tv)
+        // Dès que le MP4 1080p est prêt, on l'ouvre dans le lecteur natif (AirPlay image + son).
+        .onChange(of: downloader.tvFile) { _, file in
+            guard let file else { return }
+            downloader.tvFile = nil
+            downloader.dismiss()
+            tv.play(file: file)
+        }
         .sheet(isPresented: $showBookmarks) { BookmarksView() }
         .sheet(isPresented: $showPremium) { PremiumView() }
         .fullScreenCover(isPresented: Binding(
@@ -94,12 +101,13 @@ struct Toolbar: View {
                 }
                 // Met en pause la vidéo de la page pour ne pas avoir deux sons en même temps.
                 browser.webView?.evaluateJavaScript("document.querySelectorAll('video').forEach(v => v.pause())")
-                tv.open(videoID: id) { browser.downloadNotice = $0 }
+                downloader.start(videoID: id, title: browser.title, purpose: .tv)
             } label: {
-                if tv.loading { ProgressView() } else { Image(systemName: "tv") }
+                if downloader.isActive && downloader.purpose == .tv { ProgressView() } else { Image(systemName: "tv") }
             }
+            .disabled(downloader.isActive)
             .frame(width: 28, height: 28)
-            .accessibilityLabel("Lire sur la télé (AirPlay image + son)")
+            .accessibilityLabel("Lire sur la télé en 1080p (AirPlay image + son)")
             Spacer()
             AirPlayButton().frame(width: 28, height: 28)
             Spacer()
@@ -165,12 +173,12 @@ struct DownloadBanner: View {
     private var label: String {
         switch downloader.phase {
         case .idle: return ""
-        case .analyzing: return "Analyse de la vidéo…"
+        case .analyzing: return downloader.purpose == .tv ? "Préparation en 1080p pour la télé…" : "Analyse de la vidéo…"
         case .video(let p): return "Vidéo · \(Int(p * 100)) %"
         case .audio(let p): return "Audio · \(Int(p * 100)) %"
         case .merging: return "Assemblage vidéo + audio…"
         case .saving: return "Enregistrement dans Photos…"
-        case .done: return "Enregistrée dans Photos"
+        case .done: return downloader.purpose == .tv ? "Prête : lecture sur la télé" : "Enregistrée dans Photos"
         case .failed(let message): return "Échec : \(message)"
         }
     }
