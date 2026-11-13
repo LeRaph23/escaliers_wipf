@@ -168,7 +168,7 @@ La demande — écouter de vraies musiques, écran verrouillé, gratuitement —
 
 Les seuls obstacles rencontrés (coupure HTTP 403 sur les requêtes longues, avertissement de moteur JavaScript) ont été levés par de simples réglages (téléchargement par morceaux, nouvelles tentatives).
 
-**Intégration dans le clone.** À la demande de l'encadrement, la fonction a ensuite été intégrée **nativement** dans Lumen iOS : une bibliothèque open source (YouTubeKit, ~400 lignes d'appel côté app) fournit les flux, l'app télécharge par morceaux, assemble vidéo et audio avec AVFoundation et enregistre le résultat dans Photos. Le passage de la chaîne d'outils externe (a-Shell + yt-dlp + Raccourcis) à une fonction intégrée de l'app a pris **une seule itération de développement assisté par IA**, sans aucune expertise préalable du format des flux YouTube. La build de démonstration n'est pas distribuée.
+**Intégration dans le clone.** À la demande de l'encadrement, la fonction a ensuite été intégrée **nativement** dans Lumen iOS : une bibliothèque open source (YouTubeKit) fournit les flux, et environ 180 lignes de Swift côté app suffisent, l'app télécharge par morceaux, assemble vidéo et audio avec AVFoundation et enregistre le résultat dans Photos. Le passage de la chaîne d'outils externe (a-Shell + yt-dlp + Raccourcis) à une fonction intégrée de l'app a pris **une seule itération de développement assisté par IA**, sans aucune expertise préalable du format des flux YouTube. La build de démonstration n'est pas distribuée.
 
 **Enseignements pour l'ANSSI / SGDSN.**
 1. La reproductibilité ne passe pas seulement par la réécriture de code : elle passe par l'**assemblage** de briques publiques, que l'IA rend accessible à un non-spécialiste.
