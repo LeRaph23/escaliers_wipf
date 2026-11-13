@@ -33,11 +33,14 @@ Identique à Lumen iOS :
 3. iPhone : *Réglages → Confidentialité et sécurité → Mode développeur* → activer, redémarrer.
 4. **Run** ▶. Au 1er lancement : *Réglages → Général → VPN et gestion de l'appareil* → faire confiance.
 
-## Limites assumées
-- **Lecture en arrière-plan d'une vidéo YouTube dans une WKWebView** : iOS peut suspendre le média web quand
-  l'app passe en arrière-plan. Le mode audio + la session `.playback` aident, mais la continuité n'est pas
-  garantie comme avec un lecteur natif. En avant-plan : OK.
-- La recherche par mots-clés demande une **clé YouTube Data API** (réglages de l'app) ; sinon catalogue de démo
-  + liens YouTube collés.
-- Lire l'audio de YouTube hors de son lecteur visible est contraire aux CGU de YouTube (légal en France pour
-  l'étude). Voir `../ANALYSE.md`.
+## Musique et lecture en arrière-plan
+L'app lit de la musique en streaming **libre et gratuite** via **Audius** (aucun compte, aucune clé). Les pistes
+sont jouées par un vrai lecteur audio HTML5 — pas le lecteur YouTube — donc la lecture **continue écran verrouillé
+et en arrière-plan**, avec les contrôles sur l'écran de verrouillage (API MediaSession). C'est rendu possible par
+`AVAudioSession(.playback)` + `UIBackgroundModes=audio` (déjà configurés).
+
+> À vérifier sur ton appareil : la continuité audio en arrière-plan d'un `<audio>` dans une WKWebView est fiable
+> avec ces réglages, mais dépend de la version d'iOS. Si jamais elle se coupe, teste d'abord la PWA dans Safari
+> (où le comportement est garanti).
+
+Rien de contraire aux CGU ici : Audius est une plateforme de streaming conçue pour être lue par des apps tierces.

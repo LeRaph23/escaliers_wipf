@@ -4,7 +4,7 @@ Prototypes clean-room pour une étude sur la reproductibilité d'applications pa
 
 | Dossier | Équivalent fonctionnel de | Langage visuel | Lancer |
 |---|---|---|---|
-| `cadence-pwa/` | lecteur musical (type Demus) | app web (interface iOS / lecteur musical) | `python3 -m http.server -d cadence-pwa 8080` |
+| `cadence-pwa/` | lecteur musical (type Demus) | app web, **vraie musique via Audius** (gratuit, sans clé, lecture arrière-plan) | `python3 -m http.server -d cadence-pwa 8080` |
 | `cadence-ios/` | lecteur musical (type Demus) | **app iOS native** (WKWebView embarquant `cadence-pwa`) | Xcode (voir `cadence-ios/README.md`) |
 | `lumen-web/` | interface d'une plateforme vidéo | app web (identité propre) | `python3 -m http.server -d lumen-web 8081` |
 | `lumen-ios/` | navigateur vidéo + bloqueur (type YouPlay) | **app iOS native** (SwiftUI) | Xcode (voir `lumen-ios/README.md`) |

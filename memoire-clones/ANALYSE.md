@@ -140,3 +140,12 @@ L'import Takeout de Lumen web est testé par `tests-takeout.js` (jeu d'essai `te
 **Pourquoi c'est le cœur de la démonstration.** La seule chose que la voie interne « ajoute » par rapport à l'API officielle, c'est de **sortir du cadre contractuel** (pas de clé, audio dissocié). La fonction visible pour l'utilisateur — chercher et écouter une musique de YouTube — est déjà obtenue légalement. Autrement dit : **la frontière entre le clone d'étude et le clone contrefaisant n'est pas une frontière de compétence technique, mais de conformité.** Un auteur de clone malveillant franchit cette ligne pour quelques avantages de confort ; c'est ce franchissement, et non la copie de l'interface, qui constitue le risque à documenter pour l'ANSSI/SGDSN.
 
 Pour cette raison, ce dépôt implémente uniquement la voie officielle. Test : `tests-cadence-youtube.js`.
+
+
+## 12. Résolution légale du besoin « vraie musique, lecture en arrière-plan »
+
+La demande — écouter de vraies musiques, écran verrouillé, gratuitement — ne peut pas être satisfaite via YouTube sans enfreindre ses CGU : la lecture en arrière-plan est une fonctionnalité **payante** (YouTube Premium) que le lecteur officiel bloque volontairement, et seule l'extraction de flux (API interne) permettrait de la contourner.
+
+**Choix retenu, licite.** Cadence est rebranché sur **Audius**, plateforme de streaming libre et gratuite dont l'API publique est explicitement destinée aux applications tierces. Chaque piste expose une URL de flux audio jouée par un lecteur `<audio>` HTML5 : la lecture continue donc en arrière-plan et sur l'écran verrouillé (API MediaSession), **sans aucun contournement**.
+
+**Enseignement pour le mémoire.** Le même besoin utilisateur a deux réponses : l'une (YouTube + extraction de flux) franchit la ligne contractuelle et constitue le risque à documenter ; l'autre (catalogue réellement libre) le satisfait légalement. La différence n'est pas technique, elle est **de source de contenu et de droits**. Un clone devient problématique non pas parce qu'il lit de la musique en fond, mais parce qu'il le fait sur un catalogue dont il n'a pas le droit — distinction centrale pour une analyse destinée à l'ANSSI/SGDSN. Test : `tests-cadence-audius.js`.
