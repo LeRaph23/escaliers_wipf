@@ -23,6 +23,9 @@ final class BrowserModel: NSObject, ObservableObject, WKNavigationDelegate {
     private var blocker: WKContentRuleList?
     private var observers: [NSKeyValueObservation] = []
 
+    /// Page ouverte au lancement de l'app.
+    static let homeURL = URL(string: "https://m.youtube.com")!
+
     static let defaultSites: [Bookmark] = [
         // Connexion, historique, recommandations : fournis par le site lui-même, pas par l'app.
         Bookmark(title: "YouTube", url: URL(string: "https://m.youtube.com")!),
@@ -60,9 +63,10 @@ final class BrowserModel: NSObject, ObservableObject, WKNavigationDelegate {
             wv.observe(\.canGoForward) { [weak self] v, _ in
                 Task { @MainActor in self?.canGoForward = v.canGoForward } },
         ]
+        // Au lancement (aucune page précédente), on ouvre directement YouTube.
         let previous = webView?.url
         webView = wv
-        if let previous { wv.load(URLRequest(url: previous)) }
+        wv.load(URLRequest(url: previous ?? Self.homeURL))
         objectWillChange.send()
     }
 
