@@ -44,10 +44,13 @@ C'est exactement le fonctionnement de YouPlay.
 > Lumen iOS n'a besoin d'aucune clé : tu te connectes directement sur youtube.com dans le navigateur intégré.
 
 ## AirPlay (image + son) et téléchargement
-- **AirPlay vidéo** : l'app force l'AirPlay sur les balises `<video>` (le lecteur YouTube ne l'active pas seul,
-  ce qui ne renvoyait que le son). Touche l'icône AirPlay et choisis ta télé → image + son. Si une page/lecteur
-  bloque quand même l'AirPlay vidéo, la méthode garantie reste la **Recopie de l'écran** depuis le Centre de
-  contrôle d'iOS (elle envoie tout l'écran, image + son).
+- **AirPlay image + son (bouton 📺 « Lire sur la télé »).** Le site mobile de YouTube joue ses vidéos via
+  Media Source Extensions : iOS ne sait pas envoyer ce type de vidéo en AirPlay, d'où « son seulement » avec le
+  bouton AirPlay classique. Sur une page de vidéo, le bouton 📺 relit la vidéo dans le **lecteur natif d'iOS**
+  (via YouTubeKit), qui envoie **image + son** : touche ensuite l'icône AirPlay du lecteur et choisis ta télé.
+  > Limite : AirPlay ne lit directement que les flux « vidéo + audio » de YouTube, souvent plafonnés à **360p**.
+  > Pour la **pleine qualité**, utilise la **Recopie de l'écran** (Centre de contrôle → Recopie de l'écran → ta télé),
+  > puis mets la vidéo YouTube en plein écran dans Lumen : c'est la méthode garantie.
 - **Téléchargement natif (bouton ⬇︎).** Sur une page de vidéo YouTube, le bouton télécharge la vidéo en
   **MP4 jusqu'à 1080p** et l'enregistre dans **Photos**, directement dans l'app :
   1. la bibliothèque open source **YouTubeKit** (Swift Package, ajoutée automatiquement par `project.yml`)

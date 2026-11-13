@@ -6,6 +6,7 @@ struct RootView: View {
     @EnvironmentObject var browser: BrowserModel
     @EnvironmentObject var store: PremiumStore
     @StateObject private var downloader = VideoDownloader()
+    @StateObject private var tv = TVPlayback()
     @State private var showBookmarks = false
     @State private var showPremium = false
 
@@ -20,9 +21,28 @@ struct RootView: View {
             Toolbar(showBookmarks: $showBookmarks, showPremium: $showPremium)
         }
         .environmentObject(downloader)
+        .environmentObject(tv)
         .sheet(isPresented: $showBookmarks) { BookmarksView() }
         .sheet(isPresented: $showPremium) { PremiumView() }
-        .alert("Téléchargement", isPresented: Binding(
+        .fullScreenCover(isPresented: Binding(
+            get: { tv.player != nil },
+            set: { if !$0 { tv.close() } }
+        )) {
+            if let player = tv.player {
+                NativePlayerView(player: player)
+                    .ignoresSafeArea()
+                    .overlay(alignment: .topLeading) {
+                        Button { tv.close() } label: {
+                            Label("Fermer", systemImage: "chevron.down")
+                                .font(.subheadline.weight(.semibold))
+                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                .background(.ultraThinMaterial, in: Capsule())
+                        }
+                        .padding(.leading, 16).padding(.top, 56)
+                    }
+            }
+        }
+        .alert("Lumen", isPresented: Binding(
             get: { browser.downloadNotice != nil },
             set: { if !$0 { browser.downloadNotice = nil } }
         )) {
@@ -56,6 +76,7 @@ struct AddressBar: View {
 struct Toolbar: View {
     @EnvironmentObject var browser: BrowserModel
     @EnvironmentObject var downloader: VideoDownloader
+    @EnvironmentObject var tv: TVPlayback
     @Binding var showBookmarks: Bool
     @Binding var showPremium: Bool
     var body: some View {
@@ -65,6 +86,20 @@ struct Toolbar: View {
             Button(action: browser.forward) { Image(systemName: "chevron.right") }.disabled(!browser.canGoForward)
             Spacer()
             Button(action: browser.reload) { Image(systemName: "arrow.clockwise") }
+            Spacer()
+            Button {
+                guard let id = browser.currentVideoID else {
+                    browser.downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche « Lire sur la télé »."
+                    return
+                }
+                // Met en pause la vidéo de la page pour ne pas avoir deux sons en même temps.
+                browser.webView?.evaluateJavaScript("document.querySelectorAll('video').forEach(v => v.pause())")
+                tv.open(videoID: id) { browser.downloadNotice = $0 }
+            } label: {
+                if tv.loading { ProgressView() } else { Image(systemName: "tv") }
+            }
+            .frame(width: 28, height: 28)
+            .accessibilityLabel("Lire sur la télé (AirPlay image + son)")
             Spacer()
             AirPlayButton().frame(width: 28, height: 28)
             Spacer()
