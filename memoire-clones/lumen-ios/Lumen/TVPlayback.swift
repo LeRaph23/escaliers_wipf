@@ -11,14 +11,12 @@ import AVKit
 @MainActor
 final class TVPlayback: ObservableObject {
     @Published private(set) var player: AVPlayer?
-    private var file: URL?
+    /// Fichier temporaire à supprimer à la fermeture (lecture « télé » directe, pas une vidéo de la bibliothèque).
+    private var tempFile: URL?
 
-    func play(file: URL) {
-        // Arrête une éventuelle lecture précédente sans effacer le nouveau fichier (même chemin en cache).
-        player?.pause()
-        player = nil
-        if let old = self.file, old != file { try? FileManager.default.removeItem(at: old) }
-        self.file = file
+    func play(file: URL, deleteOnClose: Bool) {
+        close()
+        tempFile = deleteOnClose ? file : nil
         let p = AVPlayer(url: file)
         p.allowsExternalPlayback = true
         player = p
@@ -28,8 +26,8 @@ final class TVPlayback: ObservableObject {
     func close() {
         player?.pause()
         player = nil
-        if let file { try? FileManager.default.removeItem(at: file) }
-        file = nil
+        if let tempFile { try? FileManager.default.removeItem(at: tempFile) }
+        tempFile = nil
     }
 }
 

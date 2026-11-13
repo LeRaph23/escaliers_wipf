@@ -7,6 +7,7 @@ struct RootView: View {
     @EnvironmentObject var store: PremiumStore
     @StateObject private var downloader = VideoDownloader()
     @StateObject private var tv = TVPlayback()
+    @StateObject private var downloads = DownloadsStore()
     @State private var showBookmarks = false
     @State private var showPremium = false
 
@@ -22,12 +23,19 @@ struct RootView: View {
         }
         .environmentObject(downloader)
         .environmentObject(tv)
-        // Dès que le MP4 1080p est prêt, on l'ouvre dans le lecteur natif (AirPlay image + son).
-        .onChange(of: downloader.tvFile) { _, file in
-            guard let file else { return }
-            downloader.tvFile = nil
-            downloader.dismiss()
-            tv.play(file: file)
+        .environmentObject(downloads)
+        // Fichier MP4 terminé : rangé dans Téléchargements, ou ouvert directement dans le lecteur (AirPlay 1080p).
+        .onChange(of: downloader.finished) { _, done in
+            guard let done else { return }
+            downloader.finished = nil
+            switch done.purpose {
+            case .library:
+                do { try downloads.add(file: done.file, videoID: done.videoID, title: done.title) }
+                catch { downloader.phase = .failed("rangement impossible : \(error.localizedDescription)") }
+            case .tv:
+                downloader.dismiss()
+                tv.play(file: done.file, deleteOnClose: true)
+            }
         }
         .sheet(isPresented: $showBookmarks) { BookmarksView() }
         .sheet(isPresented: $showPremium) { PremiumView() }
@@ -101,7 +109,7 @@ struct Toolbar: View {
                 }
                 // Met en pause la vidéo de la page pour ne pas avoir deux sons en même temps.
                 browser.webView?.evaluateJavaScript("document.querySelectorAll('video').forEach(v => v.pause())")
-                downloader.start(videoID: id, title: browser.title, purpose: .tv)
+                downloader.start(videoID: id, title: browser.videoTitle, purpose: .tv)
             } label: {
                 if downloader.isActive && downloader.purpose == .tv { ProgressView() } else { Image(systemName: "tv") }
             }
@@ -116,7 +124,7 @@ struct Toolbar: View {
                     browser.downloadNotice = "Ouvre d'abord une vidéo YouTube, puis touche Télécharger."
                     return
                 }
-                downloader.start(videoID: id, title: browser.title)
+                downloader.start(videoID: id, title: browser.videoTitle)
             } label: {
                 Image(systemName: downloader.isActive ? "arrow.down.circle.fill" : "arrow.down.circle")
             }
@@ -177,8 +185,7 @@ struct DownloadBanner: View {
         case .video(let p): return "Vidéo · \(Int(p * 100)) %"
         case .audio(let p): return "Audio · \(Int(p * 100)) %"
         case .merging: return "Assemblage vidéo + audio…"
-        case .saving: return "Enregistrement dans Photos…"
-        case .done: return downloader.purpose == .tv ? "Prête : lecture sur la télé" : "Enregistrée dans Photos"
+        case .done: return downloader.purpose == .tv ? "Prête : lecture sur la télé" : "Enregistrée dans Téléchargements (Favoris › Téléchargements)"
         case .failed(let message): return "Échec : \(message)"
         }
     }
@@ -235,6 +242,11 @@ struct BookmarksView: View {
     var body: some View {
         NavigationStack {
             List {
+                NavigationLink {
+                    DownloadsView()
+                } label: {
+                    Label("Téléchargements", systemImage: "arrow.down.circle")
+                }
                 Button("Ajouter la page actuelle") { browser.bookmarkCurrent() }
                 ForEach(browser.bookmarks) { b in
                     Button { browser.open(b.url); dismiss() } label: {

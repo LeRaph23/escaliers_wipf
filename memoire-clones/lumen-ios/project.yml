@@ -35,8 +35,9 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         ITSAppUsesNonExemptEncryption: false
-        # Enregistrement des vidéos téléchargées dans Photos.
-        NSPhotoLibraryAddUsageDescription: Lumen enregistre les vidéos téléchargées dans ta photothèque.
+        # Le dossier « Téléchargements » de l'app est visible dans l'app Fichiers (Sur mon iPhone › Lumen).
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.exemple.lumen

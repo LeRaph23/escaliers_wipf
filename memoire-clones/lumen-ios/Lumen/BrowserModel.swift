@@ -99,6 +99,13 @@ final class BrowserModel: NSObject, ObservableObject, WKNavigationDelegate {
     /// Message affiché quand le téléchargement ne peut pas démarrer.
     @Published var downloadNotice: String?
 
+    /// Titre de la vidéo affichée, sans le suffixe « - YouTube » ajouté par le site.
+    var videoTitle: String {
+        var t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.hasSuffix(" - YouTube") { t = String(t.dropLast(" - YouTube".count)) }
+        return t.isEmpty ? (currentVideoID ?? "Vidéo") : t
+    }
+
     /// Identifiant de la vidéo YouTube affichée, ou nil si la page n'est pas une vidéo.
     var currentVideoID: String? { webView?.url.flatMap(Self.youtubeVideoID(from:)) }
 

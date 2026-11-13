@@ -1,30 +1,36 @@
 import Foundation
 import AVFoundation
-import Photos
 import YouTubeKit
 
-/// Téléchargement natif d'une vidéo YouTube vers Photos (démonstration de reproductibilité,
+/// Téléchargement natif d'une vidéo YouTube dans l'app (démonstration de reproductibilité,
 /// usage personnel uniquement — contraire aux CGU de YouTube, ne pas distribuer).
 ///
 /// Chaîne : YouTubeKit (bibliothèque open source) liste les flux → téléchargement de la meilleure
 /// vidéo H.264/MP4 ≤ 1080p et du meilleur audio M4A, par morceaux de 10 Mo avec nouvelles tentatives
 /// (parade aux coupures HTTP 403 sur les longues requêtes) → fusion AVFoundation sans réencodage
-/// → enregistrement dans Photos.
+/// → fichier MP4 rangé dans « Téléchargements » (dans l'app), ou lu sur la télé. Rien ne va dans Photos.
 @MainActor
 final class VideoDownloader: ObservableObject {
     enum Phase: Equatable {
-        case idle, analyzing, video(Double), audio(Double), merging, saving, done
+        case idle, analyzing, video(Double), audio(Double), merging, done
         case failed(String)
     }
 
-    /// Destination du fichier HD : la photothèque, ou la lecture sur la télé (AirPlay 1080p).
-    enum Purpose { case photos, tv }
+    /// Destination du fichier HD : la bibliothèque Téléchargements de l'app, ou la lecture sur la télé.
+    enum Purpose { case library, tv }
+
+    /// Fichier MP4 terminé, à ranger ou à lire (pris en charge par l'interface).
+    struct Finished: Equatable {
+        let file: URL
+        let videoID: String
+        let title: String
+        let purpose: Purpose
+    }
 
     @Published var phase: Phase = .idle
     @Published private(set) var title = ""
-    @Published private(set) var purpose: Purpose = .photos
-    /// Fichier 1080p prêt à être lu sur la télé (mode .tv).
-    @Published var tvFile: URL?
+    @Published private(set) var purpose: Purpose = .library
+    @Published var finished: Finished?
     private var task: Task<Void, Never>?
 
     var isActive: Bool {
@@ -34,7 +40,7 @@ final class VideoDownloader: ObservableObject {
         }
     }
 
-    func start(videoID: String, title: String, purpose: Purpose = .photos) {
+    func start(videoID: String, title: String, purpose: Purpose = .library) {
         guard !isActive else { return }
         self.title = title
         self.purpose = purpose
@@ -81,20 +87,8 @@ final class VideoDownloader: ObservableObject {
             throw DownloadError.noStream
         }
 
-        switch purpose {
-        case .photos:
-            phase = .saving
-            try await Self.saveToPhotos(out)
-            try? fm.removeItem(at: out)
-            phase = .done
-        case .tv:
-            // Gardé en cache le temps de la lecture ; supprimé à la fermeture du lecteur.
-            let dest = fm.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("lumen-tv.mp4")
-            try? fm.removeItem(at: dest)
-            try fm.moveItem(at: out, to: dest)
-            phase = .done
-            tvFile = dest
-        }
+        phase = .done
+        finished = Finished(file: out, videoID: videoID, title: title, purpose: purpose)
     }
 
     /// Assemble la piste vidéo et la piste audio dans un MP4, sans réencodage (passthrough).
@@ -123,14 +117,6 @@ final class VideoDownloader: ObservableObject {
         export.outputFileType = .mp4
         await export.export()
         guard export.status == .completed else { throw export.error ?? (DownloadError.merge as Error) }
-    }
-
-    private static func saveToPhotos(_ file: URL) async throws {
-        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else { throw DownloadError.photos }
-        try await PHPhotoLibrary.shared().performChanges {
-            _ = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: file)
-        }
     }
 }
 
@@ -190,13 +176,12 @@ enum ChunkedDownloader {
 }
 
 enum DownloadError: LocalizedError {
-    case noStream, merge, photos, http(Int)
+    case noStream, merge, http(Int)
 
     var errorDescription: String? {
         switch self {
         case .noStream: return "aucun flux compatible trouvé pour cette vidéo."
         case .merge: return "l'assemblage vidéo + audio a échoué."
-        case .photos: return "accès à Photos refusé (Réglages › Lumen › Photos)."
         case .http(let code): return "le serveur a refusé le téléchargement (HTTP \(code))."
         }
     }
